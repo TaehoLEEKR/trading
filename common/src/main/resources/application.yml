@@ -11,3 +11,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+
+logging:
+  level:
+    root: INFO
+    com.trade: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.stat: DEBUG
