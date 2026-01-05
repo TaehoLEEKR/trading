@@ -1,0 +1,5 @@
+rootProject.name = 'trading'
+
+include 'common'
+include 'service'
+include 'service:auth'
