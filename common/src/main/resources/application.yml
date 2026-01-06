@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:13306/trade?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/trading?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
