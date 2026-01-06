@@ -14,7 +14,7 @@ import java.util.UUID;
 import static com.trade.common.constant.staticConst.HEADER_REQUEST_ID;
 import static com.trade.common.constant.staticConst.HEADER_RUN_ID;
 
-@Component
+@Component("tradeRequestContextFilter")
 public class RequestContextFilter extends OncePerRequestFilter {
 
 

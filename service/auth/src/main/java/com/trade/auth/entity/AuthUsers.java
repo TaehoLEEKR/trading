@@ -34,6 +34,6 @@ public class AuthUsers extends BaseTime {
 
     @ColumnDefault("'USER'")
     @Column(name = "role", nullable = false, length = 20)
-    private String role;
+    private String role= "USER";
 
 }
