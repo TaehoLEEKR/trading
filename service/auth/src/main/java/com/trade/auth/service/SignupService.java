@@ -1,7 +1,12 @@
 package com.trade.auth.service;
 
+import com.trade.auth.component.JwtProvider;
+import com.trade.auth.component.RefreshTokenStore;
+import com.trade.auth.component.TokenGenerator;
 import com.trade.auth.entity.AuthUsers;
+import com.trade.auth.model.LoginDto;
 import com.trade.auth.model.SignupDto;
+import com.trade.auth.record.LoginResult;
 import com.trade.auth.repository.AuthUsersRepository;
 import com.trade.common.constant.ErrorCode;
 import com.trade.common.exception.CustomException;
@@ -12,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static com.trade.common.constant.staticConst.USER;
@@ -24,6 +30,9 @@ public class SignupService {
     @Value("${aes.key}")
     private String EncryptKey;
     private final AuthUsersRepository authUsersRepository;
+    private final RefreshTokenStore refreshTokenStore;
+    private final JwtProvider jwtProvider;
+    private final TokenGenerator tokenGenerator;
 
     @Transactional
     public SignupDto.Response signup(SignupDto.Request request) {
@@ -62,8 +71,40 @@ public class SignupService {
         }
     }
 
+    public LoginResult login(LoginDto.Request request) {
+
+        AuthUsers user = authUsersRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.VALIDATION_ERROR));
+
+        //pw 검증
+
+
+        String accessToken = jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
+        long expiresIn = 900;
+
+
+        String refreshToken = tokenGenerator.randomBase64Url(32);
+
+
+        refreshTokenStore.store(refreshToken, user.getUserId(), Duration.ofDays(14));
+
+
+        LoginDto.Response body = LoginDto.Response.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .role(user.getRole())
+                .accessToken(accessToken)
+                .expiresIn(expiresIn)
+                .build();
+
+        return new LoginResult(body, refreshToken);
+    }
+
     @Transactional(readOnly = true)
     public boolean isEmailExists(String email) {
         return authUsersRepository.existsByEmail(email);
     }
+
+
 }
