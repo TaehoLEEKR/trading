@@ -22,3 +22,8 @@ logging:
 
 aes:
   key:
+
+jwt:
+  issuer: trading-auth
+  secret:
+  access-token-validity-seconds: 900
