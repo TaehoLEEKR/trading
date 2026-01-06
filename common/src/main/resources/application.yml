@@ -4,6 +4,12 @@ spring:
     username:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port:
+      password:
+
   jpa:
     open-in-view: false
     hibernate:
