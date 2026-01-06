@@ -1,0 +1,12 @@
+### GET request to example server
+###
+POST http://localhost:8080/v1/api/auth/signup
+Content-Type: application/json
+X-Run-Id: test1111111111111111111111111111111111111111111
+X-Request-Id: testReqId
+
+{
+  "email": "test@test.com",
+  "password": "23467811",
+  "name": "test"
+}
