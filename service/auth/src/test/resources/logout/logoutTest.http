@@ -1,0 +1,12 @@
+### Step 1: Login to obtain refresh token cookie
+POST http://localhost:8080/v1/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "23467811"
+}
+
+### Step 2: Logout with the refresh token cookie copied from login response
+POST http://localhost:8080/v1/api/auth/logout
+Cookie: refresh_token=34HrgJq9pCWYMoIISJOokoT1laulK5ntm-OlAGiYF2I

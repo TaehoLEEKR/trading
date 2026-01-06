@@ -146,8 +146,14 @@ public class SignupService {
         return jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
     }
 
-}
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        refreshTokenStore.revoke(refreshToken);
+    }
 
+}
 
 
 
