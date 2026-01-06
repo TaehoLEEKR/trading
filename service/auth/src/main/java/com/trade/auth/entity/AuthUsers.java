@@ -21,7 +21,7 @@ public class AuthUsers extends BaseTime {
     @Id
     @Column(name = "user_id", nullable = false)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    private String user_id;
+    private String userId;
 
     @Column(name = "email", nullable = false)
     private String email;

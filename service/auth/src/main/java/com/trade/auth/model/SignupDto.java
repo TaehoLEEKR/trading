@@ -34,6 +34,8 @@ public class SignupDto {
     @Setter
     @Builder
     public static class Response {
-        private AuthUsers user;
+        private String userId;
+        private String email;
+        private String name;
     }
 }
