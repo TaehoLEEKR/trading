@@ -7,6 +7,12 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-999, "API 사용중 ERROR 발생"),
+
+    //Validation
+    CONFLICT_DATA(HttpStatus.CONFLICT,-409, "중복된 데이터가 있습니다."),
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST,-400, "Validation Error"),
+
+
     FAILED_TO_CALL_CLIENT(HttpStatus.BAD_GATEWAY,-301, "HTTP CALL FAILED"),
     CALL_REQUEST_BODY_NULL(HttpStatus.BAD_REQUEST,-302,"HTTP CALL REQEUST BODY NULL" ),
 
