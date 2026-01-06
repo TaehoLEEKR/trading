@@ -20,6 +20,8 @@ public class AES256 {
     private static final int GCM_TAG_LENGTH_BITS = 128;
     private static final int IV_LENGTH_BYTES = 12;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+    private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
     public String Encrypt(String key, String value) {
 
@@ -43,7 +45,7 @@ public class AES256 {
             System.arraycopy(iv, 0, out, 0, iv.length);
             System.arraycopy(cipherBytes, 0, out, iv.length, cipherBytes.length);
 
-            return Base64.getEncoder().encodeToString(out);
+            return BASE64_ENCODER.encodeToString(out);
         } catch (Exception e) {
             throw new IllegalStateException("AES256 Encrypt 실패", e);
         }
@@ -52,7 +54,7 @@ public class AES256 {
     public String Decrypt(String key, String value) {
         if (value == null) return null;
         try {
-            byte[] all = Base64.getDecoder().decode(value);
+            byte[] all = BASE64_DECODER.decode(value);
             if (all.length <= IV_LENGTH_BYTES) {
                 throw new IllegalArgumentException("암호문이 유효하지 않습니다.(IV 길이 부족)");
             }
@@ -76,6 +78,18 @@ public class AES256 {
         }
     }
 
+    public boolean matches(String key, String plain, String encrypted) {
+        if (plain == null || encrypted == null) {
+            return false;
+        }
+
+        try {
+            return plain.equals(Decrypt(key, encrypted));
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
+    }
+
     private static byte[] normalizeKeyTo32Bytes(String key) {
         if (key == null || key.isBlank()) {
             throw new IllegalArgumentException("AES key가 비어있습니다.");
@@ -83,7 +97,7 @@ public class AES256 {
 
         // Base64로 32바이트 키가 들어오는 경우 그대로 사용
         try {
-            byte[] decoded = Base64.getDecoder().decode(key);
+            byte[] decoded = BASE64_DECODER.decode(key);
             if (decoded.length == 32) return decoded;
         } catch (IllegalArgumentException ignored) {
             // not base64

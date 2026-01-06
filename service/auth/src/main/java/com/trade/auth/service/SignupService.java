@@ -27,8 +27,13 @@ import static com.trade.common.constant.staticConst.USER;
 @Slf4j
 public class SignupService {
 
+    private static final Duration REFRESH_TOKEN_TTL = Duration.ofDays(14);
+
     @Value("${aes.key}")
     private String EncryptKey;
+    @Value("${jwt.access-token-validity-seconds:900}")
+    private long accessTokenValiditySeconds;
+
     private final AuthUsersRepository authUsersRepository;
     private final RefreshTokenStore refreshTokenStore;
     private final JwtProvider jwtProvider;
@@ -45,16 +50,16 @@ public class SignupService {
                     .email(request.getEmail())
                     .name(request.getName())
                     .role(USER)
-                    .passwordHash(AES256.Encrypt(request.getPassword(), EncryptKey))
+                    .passwordHash(AES256.Encrypt(EncryptKey, request.getPassword()))
                     .build();
 
-            // DB 적재
+            // DB 검증
             if(!isEmailExists(request.getEmail())) {
                 authUsersRepository.save(authUsers);
             }else{
                 throw new CustomException(ErrorCode.CONFLICT_DATA);
             }
-            // 적재 확인
+
             return SignupDto.Response.builder()
                     .userId(authUsers.getUserId())
                     .email(authUsers.getEmail())
@@ -77,16 +82,16 @@ public class SignupService {
                 .orElseThrow(() -> new CustomException(ErrorCode.VALIDATION_ERROR));
 
         //pw 검증
+        if(!AES256.matches(EncryptKey, request.getPassword(), user.getPasswordHash())){
+            throw new CustomException(ErrorCode.VALIDATION_PW_ERROR);
+        }
 
-
-        String accessToken = jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
-        long expiresIn = 900;
-
+        String accessToken = getAccessToken(user);
 
         String refreshToken = tokenGenerator.randomBase64Url(32);
 
 
-        refreshTokenStore.store(refreshToken, user.getUserId(), Duration.ofDays(14));
+        refreshTokenStore.store(refreshToken, user.getUserId(), REFRESH_TOKEN_TTL);
 
 
         LoginDto.Response body = LoginDto.Response.builder()
@@ -95,16 +100,54 @@ public class SignupService {
                 .name(user.getName())
                 .role(user.getRole())
                 .accessToken(accessToken)
-                .expiresIn(expiresIn)
+                .expiresIn(accessTokenValiditySeconds)
                 .build();
 
         return new LoginResult(body, refreshToken);
     }
 
+    public LoginResult refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String userId = refreshTokenStore.getUserId(refreshToken);
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        AuthUsers user = authUsersRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
+        refreshTokenStore.revoke(refreshToken);
+
+//        String accessToken = jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
+        String accessToken = getAccessToken(user);
+        String newRefreshToken = tokenGenerator.randomBase64Url(32);
+        refreshTokenStore.store(newRefreshToken, user.getUserId(), REFRESH_TOKEN_TTL);
+
+        LoginDto.Response body = LoginDto.Response.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .role(user.getRole())
+                .accessToken(accessToken)
+                .expiresIn(accessTokenValiditySeconds)
+                .build();
+
+        return new LoginResult(body, newRefreshToken);
+    }
     @Transactional(readOnly = true)
     public boolean isEmailExists(String email) {
         return authUsersRepository.existsByEmail(email);
     }
 
+    public String getAccessToken(AuthUsers user) {
+        return jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
+    }
 
 }
+
+
+
+

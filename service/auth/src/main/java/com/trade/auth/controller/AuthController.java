@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,4 +50,28 @@ public class AuthController {
                 .body(ApiResponse.success(result.body()));
     }
 
+
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginDto.Response>> refresh(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
+
+        LoginResult result = signupService.refresh(refreshToken);
+
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", result.refreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/api/v1/auth")
+                .maxAge(Duration.ofDays(14))
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.success(result.body()));
+    }
 }
+
+
+
+
+

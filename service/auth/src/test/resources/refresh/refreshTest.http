@@ -1,0 +1,13 @@
+﻿### Obtain tokens via login (optional helper)
+POST http://localhost:8080/v1/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "23467811"
+}
+
+### Exchange refresh token cookie for new tokens
+POST http://localhost:8080/v1/api/auth/refresh
+Cookie: refresh_token=81E50RbM9Cj9OODYZtnvVJrLawSFDv9uwWdCSCE3HlQ
+

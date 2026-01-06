@@ -66,4 +66,14 @@ public class JwtProvider {
                 .getBody();
     }
 
+    public String getUserId(String token) {
+        return parseAccessToken(token).getSubject();
+    }
+
+    public String getRole(String token) {
+        Object role = parseAccessToken(token).get("role");
+        return role == null ? null : role.toString();
+    }
+
+
 }

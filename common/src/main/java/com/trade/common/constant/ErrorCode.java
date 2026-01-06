@@ -7,10 +7,12 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-999, "API 사용중 ERROR 발생"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED,-401, "Unauthorized"),
 
     //Validation
     CONFLICT_DATA(HttpStatus.CONFLICT,-409, "중복된 데이터가 있습니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST,-400, "Validation Error"),
+    VALIDATION_PW_ERROR(HttpStatus.BAD_REQUEST,-400, "Validation PW Error"),
 
 
     FAILED_TO_CALL_CLIENT(HttpStatus.BAD_GATEWAY,-301, "HTTP CALL FAILED"),
