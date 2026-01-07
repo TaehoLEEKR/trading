@@ -1,4 +1,4 @@
-package com.trade.auth.entity;
+package com.trade.auth.entity.auth;
 
 
 import com.trade.common.model.BaseTime;
@@ -8,8 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-
-import java.time.Instant;
 
 @Entity
 @Getter

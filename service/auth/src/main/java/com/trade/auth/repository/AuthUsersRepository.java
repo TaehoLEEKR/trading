@@ -1,6 +1,6 @@
 package com.trade.auth.repository;
 
-import com.trade.auth.entity.AuthUsers;
+import com.trade.auth.entity.auth.AuthUsers;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;

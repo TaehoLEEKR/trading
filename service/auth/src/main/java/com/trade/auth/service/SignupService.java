@@ -3,11 +3,13 @@ package com.trade.auth.service;
 import com.trade.auth.component.JwtProvider;
 import com.trade.auth.component.RefreshTokenStore;
 import com.trade.auth.component.TokenGenerator;
-import com.trade.auth.entity.AuthRefreshTokens;
-import com.trade.auth.entity.AuthUsers;
+import com.trade.auth.entity.auth.AuthLoginAudit;
+import com.trade.auth.entity.auth.AuthRefreshTokens;
+import com.trade.auth.entity.auth.AuthUsers;
 import com.trade.auth.model.LoginDto;
 import com.trade.auth.model.SignupDto;
 import com.trade.auth.record.LoginResult;
+import com.trade.auth.repository.AuthLoginAuditRepository;
 import com.trade.auth.repository.AuthRefreshTokensRepository;
 import com.trade.auth.repository.AuthUsersRepository;
 import com.trade.common.constant.ErrorCode;
@@ -38,7 +40,8 @@ public class SignupService {
 
     private final AuthUsersRepository authUsersRepository;
     private final AuthRefreshTokensRepository authRefreshTokensRepository;
-
+    private final AuthLoginAuditRepository authLoginAuditRepository;
+    
     private final RefreshTokenStore refreshTokenStore;
     private final JwtProvider jwtProvider;
     private final TokenGenerator tokenGenerator;
@@ -84,14 +87,27 @@ public class SignupService {
     public LoginResult login(LoginDto.Request request) {
 
         AuthUsers user = authUsersRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.VALIDATION_ERROR));
+                .orElseGet(() -> {
+                    authLoginAuditRepository.save(
+                            AuthLoginAudit.builder()
+                                    .email(request.getEmail())
+                                    .result("FAIL")
+                                    .build()
+                    );
+                    throw new CustomException(ErrorCode.VALIDATION_ERROR);
+                });
 
         //pw 검증
         if(!AES256.matches(EncryptKey, request.getPassword(), user.getPasswordHash())){
+            authLoginAuditRepository.save(
+                    AuthLoginAudit.builder()
+                            .userId(user.getUserId())
+                            .email(user.getEmail())
+                            .result("FAIL")
+                            .build()
+            );
             throw new CustomException(ErrorCode.VALIDATION_PW_ERROR);
         }
-
-
 
         String accessToken = getAccessToken(user);
 
@@ -109,7 +125,15 @@ public class SignupService {
                 .accessToken(accessToken)
                 .expiresIn(accessTokenValiditySeconds)
                 .build();
-
+        
+        authLoginAuditRepository.save(
+                AuthLoginAudit.builder()
+                        .userId(user.getUserId())
+                        .email(user.getEmail())
+                        .result("SUCCESS")
+                        .build()
+        );
+        
         return new LoginResult(body, refreshToken);
     }
 
@@ -157,11 +181,22 @@ public class SignupService {
         return jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             return;
         }
-        refreshTokenStore.revoke(refreshToken);
+
+        String userId = refreshTokenStore.getUserId(refreshToken);
+
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        AuthUsers user = authUsersRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
+        saveAuthRefreshTokens(user, refreshToken, true);
     }
 
     @Transactional
@@ -171,7 +206,7 @@ public class SignupService {
         String revokeTime = "";
 
         if(isRevoke) {
-             revokeTime = refreshTokenStore.revoke(refreshTokens);
+            revokeTime = refreshTokenStore.revoke(refreshTokens);
         }
 
         AuthRefreshTokens refreshTokenRecord =
