@@ -31,9 +31,15 @@ public class RefreshTokenStore {
         return v == null ? null : v.toString();
     }
 
-    public void revoke(String refreshToken) {
+    public String getExpiration(String refreshToken) {
+        String hash = sha256(refreshToken);
+        return redis.opsForHash().get("rt:" + hash, "issuedAt").toString();
+    }
+
+    public String revoke(String refreshToken) {
         String hash = sha256(refreshToken);
         redis.delete("rt:" + hash);
+        return String.valueOf(System.currentTimeMillis());
     }
 
     private String sha256(String s) {

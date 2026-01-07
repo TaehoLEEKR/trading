@@ -3,10 +3,12 @@ package com.trade.auth.service;
 import com.trade.auth.component.JwtProvider;
 import com.trade.auth.component.RefreshTokenStore;
 import com.trade.auth.component.TokenGenerator;
+import com.trade.auth.entity.AuthRefreshTokens;
 import com.trade.auth.entity.AuthUsers;
 import com.trade.auth.model.LoginDto;
 import com.trade.auth.model.SignupDto;
 import com.trade.auth.record.LoginResult;
+import com.trade.auth.repository.AuthRefreshTokensRepository;
 import com.trade.auth.repository.AuthUsersRepository;
 import com.trade.common.constant.ErrorCode;
 import com.trade.common.exception.CustomException;
@@ -35,6 +37,8 @@ public class SignupService {
     private long accessTokenValiditySeconds;
 
     private final AuthUsersRepository authUsersRepository;
+    private final AuthRefreshTokensRepository authRefreshTokensRepository;
+
     private final RefreshTokenStore refreshTokenStore;
     private final JwtProvider jwtProvider;
     private final TokenGenerator tokenGenerator;
@@ -76,6 +80,7 @@ public class SignupService {
         }
     }
 
+    @Transactional
     public LoginResult login(LoginDto.Request request) {
 
         AuthUsers user = authUsersRepository.findByEmail(request.getEmail())
@@ -86,13 +91,15 @@ public class SignupService {
             throw new CustomException(ErrorCode.VALIDATION_PW_ERROR);
         }
 
+
+
         String accessToken = getAccessToken(user);
 
         String refreshToken = tokenGenerator.randomBase64Url(32);
 
-
         refreshTokenStore.store(refreshToken, user.getUserId(), REFRESH_TOKEN_TTL);
 
+        saveAuthRefreshTokens(user, refreshToken,false);
 
         LoginDto.Response body = LoginDto.Response.builder()
                 .userId(user.getUserId())
@@ -106,6 +113,7 @@ public class SignupService {
         return new LoginResult(body, refreshToken);
     }
 
+    @Transactional
     public LoginResult refresh(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
@@ -119,9 +127,9 @@ public class SignupService {
         AuthUsers user = authUsersRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
-        refreshTokenStore.revoke(refreshToken);
 
-//        String accessToken = jwtProvider.issueAccessToken(user.getUserId(), user.getRole());
+        saveAuthRefreshTokens(user, refreshToken,true);
+
         String accessToken = getAccessToken(user);
         String newRefreshToken = tokenGenerator.randomBase64Url(32);
         refreshTokenStore.store(newRefreshToken, user.getUserId(), REFRESH_TOKEN_TTL);
@@ -137,8 +145,11 @@ public class SignupService {
 
         return new LoginResult(body, newRefreshToken);
     }
+
+
     @Transactional(readOnly = true)
     public boolean isEmailExists(String email) {
+
         return authUsersRepository.existsByEmail(email);
     }
 
@@ -151,6 +162,30 @@ public class SignupService {
             return;
         }
         refreshTokenStore.revoke(refreshToken);
+    }
+
+    @Transactional
+    public void saveAuthRefreshTokens(AuthUsers user , String refreshTokens, boolean isRevoke) {
+
+        String tokenId = UUID.randomUUID().toString().substring(0,36).replaceAll("-","");
+        String revokeTime = "";
+
+        if(isRevoke) {
+             revokeTime = refreshTokenStore.revoke(refreshTokens);
+        }
+
+        AuthRefreshTokens refreshTokenRecord =
+                AuthRefreshTokens.builder()
+                        .tokenId(tokenId)
+                        .userId(user.getUserId())
+                        .tokenHash(refreshTokens)
+                        .expiresAt(
+                                refreshTokenStore.getExpiration(refreshTokens)
+                        )
+                        .revokedAt(revokeTime.isEmpty() ? null : revokeTime)
+                        .build();
+
+        authRefreshTokensRepository.save(refreshTokenRecord);
     }
 
 }
