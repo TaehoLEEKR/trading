@@ -1,6 +1,7 @@
 package com.trade.common.service;
 
 import com.trade.common.config.KisAuthConfig;
+import com.trade.common.model.token.SocketResponse;
 import com.trade.common.model.token.TokenResponse;
 import com.trade.common.response.CodeResponse;
 import com.trade.common.util.CallClient;
@@ -50,9 +51,24 @@ public class KisAuthTokenService {
         paramMap.put("appkey",kisAuthConfig.key().app());
         paramMap.put("appsecret",kisAuthConfig.key().secret());
 
-        String responseToken = callClient.POST(callRequireTokenExpireUrl,headers,paramMap);
-        log.info("responseToken : {}",responseToken);
+        String responseExpireResponse = callClient.POST(callRequireTokenExpireUrl,headers,paramMap);
+        log.info("responseExpireResponse : {}",responseExpireResponse);
 
-        return JsonUtil.getInstance().decodeFromJson(responseToken,CodeResponse.class);
+        return JsonUtil.getInstance().decodeFromJson(responseExpireResponse,CodeResponse.class);
+    }
+
+    public SocketResponse getSocketToken() {
+        String callRequireSocketUrl = kisAuthConfig.socket().domain()+ kisAuthConfig.socket().url();
+
+        Map<String,Object> paramMap = new HashMap<>();
+
+        paramMap.put("grant_type","client_credentials");
+        paramMap.put("appkey",kisAuthConfig.key().app());
+        paramMap.put("appsecret",kisAuthConfig.key().secret());
+
+        String responseToken = callClient.POST(callRequireSocketUrl,headers,paramMap);
+        log.info("responseSocketToken : {}",responseToken);
+
+        return JsonUtil.getInstance().decodeFromJson(responseToken,SocketResponse.class);
     }
 }

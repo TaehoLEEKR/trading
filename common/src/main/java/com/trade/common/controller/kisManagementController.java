@@ -2,6 +2,7 @@ package com.trade.common.controller;
 
 import com.trade.common.config.KisAuthConfig;
 import com.trade.common.constant.ErrorCode;
+import com.trade.common.model.token.SocketResponse;
 import com.trade.common.model.token.TokenResponse;
 import com.trade.common.response.ApiResponse;
 import com.trade.common.response.CodeResponse;
@@ -45,6 +46,16 @@ public class kisManagementController {
             }
         }catch (Exception e){
             log.error("Failed to expire token: {}", e.getMessage());
+            return ApiResponse.error(ErrorCode.SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/oauth/socket/token")
+    public ApiResponse<SocketResponse> getSocketToken() {
+        try {
+            return ApiResponse.success(kisAuthTokenService.getSocketToken());
+        }catch (Exception e){
+            log.error("Failed to get socket token: {}", e.getMessage());
             return ApiResponse.error(ErrorCode.SERVER_ERROR);
         }
     }
