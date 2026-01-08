@@ -1,17 +1,17 @@
 package com.trade.auth.service;
 
-import com.trade.auth.component.JwtProvider;
+import com.trade.common.component.JwtProvider;
 import com.trade.auth.component.RefreshTokenStore;
-import com.trade.auth.component.TokenGenerator;
+import com.trade.common.component.TokenGenerator;
 import com.trade.auth.entity.auth.AuthLoginAudit;
 import com.trade.auth.entity.auth.AuthRefreshTokens;
 import com.trade.auth.entity.auth.AuthUsers;
 import com.trade.auth.model.LoginDto;
 import com.trade.auth.model.SignupDto;
 import com.trade.auth.record.LoginResult;
-import com.trade.auth.repository.AuthLoginAuditRepository;
-import com.trade.auth.repository.AuthRefreshTokensRepository;
-import com.trade.auth.repository.AuthUsersRepository;
+import com.trade.auth.repository.auth.AuthLoginAuditRepository;
+import com.trade.auth.repository.auth.AuthRefreshTokensRepository;
+import com.trade.auth.repository.auth.AuthUsersRepository;
 import com.trade.common.constant.ErrorCode;
 import com.trade.common.exception.CustomException;
 import com.trade.common.util.AES256;

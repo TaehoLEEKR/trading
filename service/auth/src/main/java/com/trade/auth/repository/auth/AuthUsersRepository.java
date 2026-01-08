@@ -1,4 +1,4 @@
-package com.trade.auth.repository;
+package com.trade.auth.repository.auth;
 
 import com.trade.auth.entity.auth.AuthUsers;
 import jakarta.validation.constraints.Email;

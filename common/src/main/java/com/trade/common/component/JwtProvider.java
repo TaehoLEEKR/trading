@@ -1,4 +1,4 @@
-package com.trade.auth.component;
+package com.trade.common.component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
