@@ -24,6 +24,9 @@ spring:
 #모의투자
 trade:
   kis:
+    key:
+      secret: RbXWLu6nZSCgCRa5U+miHUWnE0nA3Amfs0Xbyi040LY73DOCSVhKc3ClHm5u8f7hcoze0VkF509xXaiQZ974G/UmHJE7FGbQie+loMgb/C2RNeWK5pv0/izVDvXZCr4vtkEUQkFsrjIqphrKiqiuP8c2roQG5116TYES2NrHTEGnOZEr0SI=
+      app: PSUKb4yuqYe3ffWrHc4offyfijDejhU5usGi
     token:
       auth-domain-url: /oauth2/tokenP
       auth-domain: https://openapivts.koreainvestment.com:29443

@@ -18,6 +18,8 @@ public enum ErrorCode {
     FAILED_TO_CALL_CLIENT(HttpStatus.BAD_GATEWAY,-301, "HTTP CALL FAILED"),
     CALL_REQUEST_BODY_NULL(HttpStatus.BAD_REQUEST,-302,"HTTP CALL REQEUST BODY NULL" ),
 
+    //KIS
+    TOKEN_DISPOSAL_ERROR(HttpStatus.BAD_REQUEST,-304,"토큰 폐기중 에러 발생"),
     ;
 
     private final HttpStatus httpStatus;

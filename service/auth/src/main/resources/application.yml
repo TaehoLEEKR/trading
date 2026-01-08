@@ -26,4 +26,4 @@ aes:
 jwt:
   issuer: trading-auth
   secret:
-  access-token-validity-seconds: 900
+  access-token-validity-seconds: 9000

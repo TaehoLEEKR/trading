@@ -31,9 +31,12 @@ public class CallClient {
         headers.forEach(httpHeaders::add);
 
         HttpEntity<Object> entity = new HttpEntity<>(body, httpHeaders);
-        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
-
-        return resultHandler(response);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
+            return resultHandler(response);
+        }catch (Exception ex){
+            return ex.getMessage();
+        }
     }
 
     // 폼 데이터 전송을 위한 메서드

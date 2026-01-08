@@ -1,0 +1,22 @@
+
+POST http://localhost:8080/v1/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "23467811"
+}
+
+###
+POST http://localhost:8081/api/kis/auth/oauth/token
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3Njc4NDgyODksImV4cCI6MTc2Nzg1NzI4OSwicm9sZSI6IlVTRVIifQ.bnqzPd4zDrJf4xRW7kY2kybi19G0adEkQ5H8l0qyV_E
+
+
+###
+POST http://localhost:8081/api/kis/auth/oauth/token/expired
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3Njc4NDgyODksImV4cCI6MTc2Nzg1NzI4OSwicm9sZSI6IlVTRVIifQ.bnqzPd4zDrJf4xRW7kY2kybi19G0adEkQ5H8l0qyV_E
+
+{
+  "access_Token" : "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjFjZThhYzQ0LWFkMzEtNGI0My1iOWEyLWMxYmZjZjA1NmFjNCIsInByZHRfY2QiOiIiLCJpc3MiOiJ1bm9ndyIsImV4cCI6MTc2NzkzMzIyNywiaWF0IjoxNzY3ODQ2ODI3LCJqdGkiOiJQU1VLYjR5dXFZZTNmZldySGM0b2ZmeWZpakRlamhVNXVzR2kifQ.bimqXYFFKTmAt-Ucvdq27fFhfBMmJ7EWhSi3XqzNlw54vGOZXbeREheuS2EiJj7d8q1G_pphW9M4HOb3L7Q2Lw"
+}

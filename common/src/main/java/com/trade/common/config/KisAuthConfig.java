@@ -6,8 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "trade.kis")
 public record KisAuthConfig(
         Token token,
-        Socket socket
+        Socket socket,
+        Key key
 ) {
+    public record Key(String secret, String app) {}
+
     public record Token(
             String authDomainUrl,
             String authDomain,
