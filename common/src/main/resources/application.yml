@@ -1,3 +1,6 @@
+server:
+  port: 8081
+
 spring:
   datasource:
     url: jdbc:mysql://localhost:13306/trading?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
@@ -17,6 +20,21 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+#모의투자
+trade:
+  kis:
+    token:
+      auth-domain-url: /oauth2/tokenP
+      auth-domain: https://openapivts.koreainvestment.com:29443
+      auth-disposal-url: /oauth2/revokeP
+      auth-disposal-domain: https://openapivts.koreainvestment.com:29443
+    socket:
+      url: /oauth2/Approval
+      domain: https://openapivts.koreainvestment.com:29443
+
+
+
 
 
 logging:
