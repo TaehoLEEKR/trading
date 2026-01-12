@@ -1,0 +1,33 @@
+
+### Obtain tokens via login (optional helper)
+POST http://localhost:8080/v1/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "23467811"
+}
+
+
+###
+POST http://localhost:8082/v1/api/universes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgxOTgwODksImV4cCI6MTc2ODIwNzA4OSwicm9sZSI6IlVTRVIifQ.ZMCUkJeW7j6RWrwrlntNoIC4htEz5eKlbEOE4QhZBr8
+
+{
+  "name": "테스트 종목",
+  "description": "테스트"
+}
+
+###
+POST http://localhost:8082/v1/api/universes/268984484750237696/instruments
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgxOTgwODksImV4cCI6MTc2ODIwNzA4OSwicm9sZSI6IlVTRVIifQ.ZMCUkJeW7j6RWrwrlntNoIC4htEz5eKlbEOE4QhZBr8
+
+{
+  "instrumentId": "5eae7da4-ed3a-4123-840e-ca1dfc1d7929"
+}
+
+###
+GET http://localhost:8082/v1/api/universes/268984484750237696/instruments
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgxOTgwODksImV4cCI6MTc2ODIwNzA4OSwicm9sZSI6IlVTRVIifQ.ZMCUkJeW7j6RWrwrlntNoIC4htEz5eKlbEOE4QhZBr8

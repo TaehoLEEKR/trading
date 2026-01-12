@@ -44,14 +44,4 @@ public class CatalogUnivers extends BaseTime {
     @Column(name = "description", length = 500)
     private String description;
 
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP(3)")
-    @Column(name = "created_at", nullable = false)
-    private String createdAt;
-
-    @NotNull
-    @ColumnDefault("CURRENT_TIMESTAMP(3)")
-    @Column(name = "updated_at", nullable = false)
-    private String updatedAt;
-
 }
