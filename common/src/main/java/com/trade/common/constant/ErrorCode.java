@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-999, "API 사용중 ERROR 발생"),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED,-401, "Unauthorized"),
+    NOT_FOUND(HttpStatus.NOT_FOUND,-404, "NOT FOUND DATA"),
 
     //Validation
     CONFLICT_DATA(HttpStatus.CONFLICT,-409, "중복된 데이터가 있습니다."),

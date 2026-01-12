@@ -1,0 +1,19 @@
+
+### Obtain tokens via login (optional helper)
+POST http://localhost:8080/v1/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "23467811"
+}
+
+### catalog instruments search
+GET http://localhost:8082/v1/api/catalog/instruments?market=KR_STOCK&exchange=KOSPI&isActive=1&keyword=삼성전자&size=20&offset=0
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgxODA3MzEsImV4cCI6MTc2ODE4OTczMSwicm9sZSI6IlVTRVIifQ.uMQ0xRHGFhmFMu60Q1afZEHh_8-4h-UosI1BgMPQ7mk
+
+###
+GET http://localhost:8082/v1/api/catalog/instruments/11650bf9-5e69-4809-afc4-9d61d362828a
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgxODA3MzEsImV4cCI6MTc2ODE4OTczMSwicm9sZSI6IlVTRVIifQ.uMQ0xRHGFhmFMu60Q1afZEHh_8-4h-UosI1BgMPQ7mk

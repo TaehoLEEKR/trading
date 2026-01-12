@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.catalog.mapper.instruments.CatalogInstrumentsDao">
+    <select id="selectByPrimaryKey" resultType="com.trade.catalog.entity.CatalogInstruments">
+        SELECT
+            instrument_id,
+            market,
+            exchange,
+            symbol,
+            name,
+            currency,
+            is_active,
+            updated_at
+        FROM catalog_instruments
+        WHERE instrument_id = #{instrumentId}
+    </select>
+
+    <select id="search" parameterType="com.trade.catalog.model.dto.instrumentsDto$Request"
+            resultType="com.trade.catalog.entity.CatalogInstruments">
+        SELECT
+            instrument_id,
+            market,
+            exchange,
+            symbol,
+            name,
+            currency,
+            is_active,
+            updated_at
+        FROM catalog_instruments
+        WHERE 1=1
+        <if test="market != null and market != ''">
+            AND market = #{market}
+        </if>
+        <if test="exchange != null and exchange != ''">
+            AND exchange = #{exchange}
+        </if>
+        <if test="isActive != null">
+            AND is_active = #{isActive}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+            symbol LIKE CONCAT(#{keyword}, '%')
+            OR name LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY name ASC, symbol ASC, instrument_id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+</mapper>
