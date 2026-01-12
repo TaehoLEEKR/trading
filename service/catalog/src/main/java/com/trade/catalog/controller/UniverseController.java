@@ -33,4 +33,15 @@ public class UniverseController {
                 universesService.addInstrumentToUniverse(universeId, instrumentId.getInstrumentId())
         );
     }
+
+    @GetMapping("/{universeId}/instruments")
+    public ApiResponse<?> getUniverseInstruments(
+            HttpServletRequest httpServletRequest,
+            @PathVariable("universeId") String universeId,
+            @RequestParam(required = false, defaultValue = "20") Integer size,
+            @RequestParam(required = false, defaultValue = "0") Integer offset
+    ) {
+        String token = httpServletRequest.getHeader("Authorization").replace("Bearer ", "");
+        return ApiResponse.success(universesService.getUniverseInstruments(token, universeId, size, offset));
+    }
 }

@@ -53,4 +53,41 @@ public class UniversesService {
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
     }
+
+    @Transactional(readOnly = true)
+    public UniverseDto.InstrumentListResponse getUniverseInstruments(String token, String universeId, Integer size, Integer offset) {
+
+        if (universeId == null || universeId.isBlank()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "universeId is required");
+        }
+
+        int safeSize = (size == null || size <= 0) ? 20 : Math.min(size, 100);
+        int safeOffset = (offset == null || offset < 0) ? 0 : offset;
+
+        CatalogUnivers universe = catalogUniversRepository.findByUniverseId(universeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "Universe not found"));
+
+        String userId = jwtProvider.getUserId(token);
+        if (!universe.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN, "Not your universe");
+        }
+
+        // hasNext 정확히 하려면 size+1
+        int limitPlusOne = safeSize + 1;
+
+        var items = catalogUniverseInstrumentsDao.selectUniverseInstruments(universeId, limitPlusOne, safeOffset);
+
+        boolean hasNext = items.size() > safeSize;
+        if (hasNext) {
+            items = items.subList(0, safeSize);
+        }
+
+        return UniverseDto.InstrumentListResponse.builder()
+                .universeId(universeId)
+                .size(safeSize)
+                .offset(safeOffset)
+                .hasNext(hasNext)
+                .items(items)
+                .build();
+    }
 }

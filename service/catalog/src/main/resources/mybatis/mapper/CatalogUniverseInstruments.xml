@@ -5,4 +5,33 @@
         INSERT INTO catalog_universe_instruments (universe_id, instrument_id)
         VALUES (#{universeId}, #{instrumentId})
     </insert>
+    <resultMap id="UniverseInstrumentItemMap" type="com.trade.catalog.model.dto.UniverseDto$InstrumentItem">
+        <result property="instrumentId" column="instrument_id"/>
+        <result property="market"       column="market"/>
+        <result property="exchange"     column="exchange"/>
+        <result property="symbol"       column="symbol"/>
+        <result property="name"         column="name"/>
+        <result property="currency"     column="currency"/>
+        <result property="isActive"     column="is_active"/>
+        <result property="addedAt"      column="added_at"/>
+    </resultMap>
+
+    <select id="selectUniverseInstruments" resultMap="UniverseInstrumentItemMap">
+        SELECT
+            i.instrument_id,
+            i.market,
+            i.exchange,
+            i.symbol,
+            i.name,
+            i.currency,
+            i.is_active,
+            ui.added_at
+        FROM catalog_universe_instruments ui
+                 JOIN catalog_instruments i
+                      ON i.instrument_id = ui.instrument_id
+        WHERE ui.universe_id = #{universeId}
+        ORDER BY ui.added_at DESC, i.name ASC, i.symbol ASC, i.instrument_id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
 </mapper>
