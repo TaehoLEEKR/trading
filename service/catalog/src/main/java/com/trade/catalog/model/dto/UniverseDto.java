@@ -17,4 +17,9 @@ public class UniverseDto {
         private String name;
         private String description;
     }
+
+    @Getter @Setter
+    public static class Request{
+        private String instrumentId;
+    }
 }
