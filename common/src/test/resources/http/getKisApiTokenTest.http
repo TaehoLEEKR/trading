@@ -9,7 +9,7 @@ Content-Type: application/json
 
 ###
 POST http://localhost:8081/api/kis/auth/oauth/token
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3Njc4NDgyODksImV4cCI6MTc2Nzg1NzI4OSwicm9sZSI6IlVTRVIifQ.bnqzPd4zDrJf4xRW7kY2kybi19G0adEkQ5H8l0qyV_E
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgyMDU4NzcsImV4cCI6MTc2ODIxNDg3Nywicm9sZSI6IlVTRVIifQ.V-nvUcR-9F6qyND8rx_l51dnnlScM0jVdpOMeyzCS4o
 
 
 ###

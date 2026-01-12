@@ -21,8 +21,11 @@ public enum ErrorCode {
 
     //KIS
     TOKEN_DISPOSAL_ERROR(HttpStatus.BAD_REQUEST,-304,"토큰 폐기중 에러 발생"),
-    FORBIDDEN(HttpStatus.FORBIDDEN,-402 ,"권한이 없습니다." );
+    FORBIDDEN(HttpStatus.FORBIDDEN,-402 ,"권한이 없습니다." ),
 
+    //MD
+    MD_JOB_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-500,"MD JOB SAVE ERROR")
+    ;
     private final HttpStatus httpStatus;
     private final int ErrorCode;
     private final String message;

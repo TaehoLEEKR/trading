@@ -7,16 +7,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "md_ingest_jobs", schema = "trading")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MdIngestJob extends BaseTime {
     @Id
     @Size(max = 50)
@@ -43,10 +46,10 @@ public class MdIngestJob extends BaseTime {
     private String status;
 
     @Column(name = "started_at")
-    private Instant startedAt;
+    private LocalDateTime startedAt;
 
     @Column(name = "ended_at")
-    private Instant endedAt;
+    private LocalDateTime endedAt;
 
     @Size(max = 64)
     @Column(name = "err_code", length = 64)
