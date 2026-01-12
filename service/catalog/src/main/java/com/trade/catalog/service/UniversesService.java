@@ -16,13 +16,15 @@ public class UniversesService {
 
     private final JwtProvider jwtProvider;
     private final CatalogUniversRepository catalogUniversRepository;
-    private Snowflake snowflake;
 
     public CatalogUnivers createUniverse(String token, UniverseDto.Create request) {
+
+        Snowflake snowflake = new Snowflake();
 
         String userId = jwtProvider.getUserId(token);
         log.info("userId : {}", userId);
         String universeId = snowflake.nextId() + "";
+        log.info("universeId : {}", universeId);
 
         CatalogUnivers catalogUnivers = CatalogUnivers.builder()
                 .universeId(universeId)
