@@ -2,6 +2,7 @@ package com.trade.md.controller;
 
 import com.trade.common.response.ApiResponse;
 import com.trade.md.model.dto.Md;
+import com.trade.md.service.MdService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class MdController {
 
+    private final MdService mdService;
+
     @PostMapping("/ingest/bars")
     public ApiResponse<Md.ResponseBars> ingestBars(@RequestBody @Valid Md.RequestBars request) {
-        return ApiResponse.success(null);
+        return ApiResponse.success(mdService.KISDataParsingAndSavingToJob(request));
     }
 }

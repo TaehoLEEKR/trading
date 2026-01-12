@@ -8,4 +8,6 @@ dependencies {
 
     runtimeOnly 'com.mysql:mysql-connector-j'
     implementation project(':common')
+    implementation project(":service:catalog")
+
 }
