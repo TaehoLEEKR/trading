@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -15,6 +16,12 @@ import java.util.Map;
 public class CallClient {
 
     private final RestTemplate restTemplate;
+
+    public record CallResult(
+            int statusCode,
+            Map<String, List<String>> headers,
+            String body
+    ) {}
 
     public String GET(String uri, Map<String, String> headers) {
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -26,6 +33,21 @@ public class CallClient {
         return resultHandler(response);
     }
 
+    public CallResult GET_WITH_HEADERS(String uri, Map<String, String> headers) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        headers.forEach(httpHeaders::add);
+
+        HttpEntity<String> entity = new HttpEntity<>(httpHeaders);
+        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+
+        String body = resultHandler(response);
+        return new CallResult(
+                response.getStatusCode().value(),
+                response.getHeaders(),
+                body
+        );
+    }
+
     public String POST(String uri, Map<String, String> headers, Object body) {
         HttpHeaders httpHeaders = new HttpHeaders();
         headers.forEach(httpHeaders::add);
@@ -34,9 +56,24 @@ public class CallClient {
         try {
             ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             return resultHandler(response);
-        }catch (Exception ex){
+        } catch (Exception ex) {
             return ex.getMessage();
         }
+    }
+
+    public CallResult POST_WITH_HEADERS(String uri, Map<String, String> headers, Object body) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        headers.forEach(httpHeaders::add);
+
+        HttpEntity<Object> entity = new HttpEntity<>(body, httpHeaders);
+        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
+
+        String responseBody = resultHandler(response);
+        return new CallResult(
+                response.getStatusCode().value(),
+                response.getHeaders(),
+                responseBody
+        );
     }
 
     // 폼 데이터 전송을 위한 메서드
@@ -44,7 +81,6 @@ public class CallClient {
         HttpHeaders httpHeaders = new HttpHeaders();
         headers.forEach(httpHeaders::add);
 
-        // application/x-www-form-urlencoded 컨텐츠 타입 설정 확인
         if (!headers.containsKey("Content-Type")) {
             httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         }
@@ -54,7 +90,6 @@ public class CallClient {
 
         return resultHandler(response);
     }
-
 
     // String 형태의 JSON을 전송하기 위한 메서드
     public String POST(String uri, Map<String, String> headers, String jsonBody) {
