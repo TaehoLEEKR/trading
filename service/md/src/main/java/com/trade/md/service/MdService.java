@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -68,7 +69,8 @@ public class MdService {
                 .status(JobStatus.RUNNING.getStatus())
                 .startedAt(LocalDateTime.now())
                 .build();
-        mdIngestJobRepository.save(job);
+//        mdIngestJobRepository.save(job);
+        start(job);
 
         try {
             String kisAccessKey = getKisRedisAccessKey(token);
@@ -97,7 +99,7 @@ public class MdService {
 
             if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
                 // job FAILED 업데이트
-                updateJobFailed(jobId, kis != null ? kis.rt_cd() : "null", kis != null ? kis.msg1() : "null response");
+                failed(jobId, kis != null ? kis.rt_cd() : "null", kis != null ? kis.msg1() : "null response");
                 throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + (kis != null ? kis.msg1() : "null"));
             }
 
@@ -117,7 +119,7 @@ public class MdService {
                 upserted = bars.size();
             }
 
-            updateJobSuccess(jobId);
+            success(jobId);
 
             return Md.ResponseBars.builder()
                     .jobId(jobId)
@@ -131,13 +133,19 @@ public class MdService {
                     .build();
 
         } catch (Exception e) {
-            updateJobFailed(jobId, "EXCEPTION", e.getMessage());
+            failed(jobId, "EXCEPTION", e.getMessage());
             if (e instanceof CustomException ce) throw ce;
             throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
         }
     }
 
-    private void updateJobSuccess(String jobId) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void start(MdIngestJob job) {
+        mdIngestJobRepository.save(job);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void success(String jobId) {
         MdIngestJob job = mdIngestJobRepository.findById(jobId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
         job.setStatus(JobStatus.SUCCESS.getStatus());
@@ -145,8 +153,9 @@ public class MdService {
         mdIngestJobRepository.save(job);
     }
 
-    private void updateJobFailed(String jobId, String errCode, String errMsg) {
-        MdIngestJob job = mdIngestJobRepository.findById(jobId)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failed(String jobId, String errCode, String errMsg) {
+                MdIngestJob job = mdIngestJobRepository.findById(jobId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
         job.setStatus(JobStatus.FAILED.getStatus());
         job.setEndedAt(LocalDateTime.now());
@@ -154,6 +163,24 @@ public class MdService {
         job.setErrMsg(errMsg);
         mdIngestJobRepository.save(job);
     }
+
+//    private void updateJobSuccess(String jobId) {
+//        MdIngestJob job = mdIngestJobRepository.findById(jobId)
+//                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
+//        job.setStatus(JobStatus.SUCCESS.getStatus());
+//        job.setEndedAt(LocalDateTime.now());
+//        mdIngestJobRepository.save(job);
+//    }
+//
+//    private void updateJobFailed(String jobId, String errCode, String errMsg) {
+//        MdIngestJob job = mdIngestJobRepository.findById(jobId)
+//                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
+//        job.setStatus(JobStatus.FAILED.getStatus());
+//        job.setEndedAt(LocalDateTime.now());
+//        job.setErrCode(errCode);
+//        job.setErrMsg(errMsg);
+//        mdIngestJobRepository.save(job);
+//    }
 
     @Transactional
     public String getKisRedisAccessKey(String token) {
