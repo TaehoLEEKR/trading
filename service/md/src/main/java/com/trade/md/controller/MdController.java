@@ -3,6 +3,7 @@ package com.trade.md.controller;
 import com.trade.common.response.ApiResponse;
 import com.trade.md.model.dto.Md;
 import com.trade.md.service.MdService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,10 @@ public class MdController {
     private final MdService mdService;
 
     @PostMapping("/ingest/bars")
-    public ApiResponse<Md.ResponseBars> ingestBars(@RequestBody @Valid Md.RequestBars request) {
-        return ApiResponse.success(mdService.KISDataParsingAndSavingToJob(request));
+    public ApiResponse<Md.ResponseBars> ingestBars(
+            HttpServletRequest httpServletRequest,
+            @RequestBody @Valid Md.RequestBars request) {
+        String token = httpServletRequest.getHeader("Authorization").replace("Bearer ", "");
+        return ApiResponse.success(mdService.KISDataParsingAndSavingToJob(request,token));
     }
 }

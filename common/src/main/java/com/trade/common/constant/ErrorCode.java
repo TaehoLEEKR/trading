@@ -24,7 +24,8 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN,-402 ,"권한이 없습니다." ),
 
     //MD
-    MD_JOB_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-500,"MD JOB SAVE ERROR")
+    MD_JOB_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,-500,"MD JOB SAVE ERROR"),
+    MD_JOB_TR_ID_WARN(HttpStatus.BAD_GATEWAY,-502,"실행한 TR ID가 일치하지 않습니다.")
     ;
     private final HttpStatus httpStatus;
     private final int ErrorCode;
