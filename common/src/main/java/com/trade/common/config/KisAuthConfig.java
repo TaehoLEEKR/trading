@@ -7,7 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record KisAuthConfig(
         Token token,
         Socket socket,
-        Key key
+        Key key,
+        URL url
 ) {
     public record Key(String secret, String app) {}
 
@@ -22,4 +23,9 @@ public record KisAuthConfig(
             String domain
     ) {}
 
+    public record URL(
+            String currentPrice,
+            String inquireDailyPrice
+    )
+    {}
 }
