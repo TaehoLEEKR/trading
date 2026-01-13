@@ -35,3 +35,20 @@ jwt:
   issuer: trading-auth
   secret:
   access-token-validity-seconds: 9000
+
+trade:
+  kis:
+    key:
+      secret: ${TRADE_KIS_KEY_SECRET:}
+      app: ${TRADE_KIS_KEY_APP:}
+    token:
+      auth-domain-url: /oauth2/tokenP
+      auth-domain: https://openapivts.koreainvestment.com:29443
+      auth-disposal-url: /oauth2/revokeP
+      auth-disposal-domain: https://openapivts.koreainvestment.com:29443
+    socket:
+      url: /oauth2/Approval
+      domain: https://openapivts.koreainvestment.com:29443
+    url:
+      current-price: https://openapivts.koreainvestment.com:29443/uapi/domestic-stock/v1/quotations/inquire-price
+      inquire-daily-price : https://openapivts.koreainvestment.com:29443/uapi/domestic-stock/v1/quotations/inquire-daily-price

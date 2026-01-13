@@ -21,7 +21,6 @@ spring:
       hibernate:
         format_sql: true
 
-#모의투자
 trade:
   kis:
     key:
@@ -35,10 +34,12 @@ trade:
     socket:
       url: /oauth2/Approval
       domain: https://openapivts.koreainvestment.com:29443
+    url:
+      current-price: https://openapivts.koreainvestment.com:29443/uapi/domestic-stock/v1/quotations/inquire-price
 
-
-
-
+local:
+  cmc:
+    retry-kis-token: http://localhost:8081/api/v1/auth/oauth/token
 
 logging:
   level:
