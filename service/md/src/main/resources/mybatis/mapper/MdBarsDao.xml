@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.md.mapper.MdBarsDao">
+
+    <insert id="upsertBars">
+        INSERT INTO md_bars
+        (
+        instrument_id,
+        market,
+        interval_cd,
+        ts,
+        o,
+        h,
+        l,
+        c,
+        v,
+        currency
+        )
+        VALUES
+        <foreach collection="bars" item="b" separator=",">
+            (
+            #{b.instrumentId},
+            #{b.market},
+            #{b.intervalCd},
+            #{b.ts},
+            #{b.o},
+            #{b.h},
+            #{b.l},
+            #{b.c},
+            #{b.v},
+            #{b.currency}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        o = VALUES(o),
+        h = VALUES(h),
+        l = VALUES(l),
+        c = VALUES(c),
+        v = VALUES(v),
+        currency = VALUES(currency),
+        updated_at = CURRENT_TIMESTAMP(3)
+    </insert>
+
+</mapper>

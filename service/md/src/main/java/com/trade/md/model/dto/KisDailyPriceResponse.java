@@ -1,13 +1,17 @@
 package com.trade.md.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record KisDailyPriceResponse(
         List<Output> output,
         String rt_cd,
         String msg_cd,
         String msg1
 ) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Output(
             String stck_bsop_date,
             String stck_oprc,

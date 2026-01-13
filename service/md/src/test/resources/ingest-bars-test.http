@@ -2,7 +2,7 @@
 ###
 POST http://localhost:8083/v1/api/md/ingest/bars
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgyNzg1OTMsImV4cCI6MTc2ODI4NzU5Mywicm9sZSI6IlVTRVIifQ.nluBgUnTRIhQzD-B_Lu7T5uJX_OrapbjZjty-53Zp-Y
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgyODc3MjgsImV4cCI6MTc2ODI5NjcyOCwicm9sZSI6IlVTRVIifQ.zTR3BmcN1eEyTam5oXkuMrGVfBPFQBZ2C9GUYEIsUxA
 
 {
   "instrumentId": "0006dadf-45da-475d-b8a3-c178c276633c",

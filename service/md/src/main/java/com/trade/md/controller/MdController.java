@@ -25,6 +25,6 @@ public class MdController {
             HttpServletRequest httpServletRequest,
             @RequestBody @Valid Md.RequestBars request) {
         String token = httpServletRequest.getHeader("Authorization").replace("Bearer ", "");
-        return ApiResponse.success(mdService.KISDataParsingAndSavingToJob(request,token));
+        return ApiResponse.success(mdService.ingestDailyBars(request,token));
     }
 }

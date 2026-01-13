@@ -14,8 +14,11 @@ import com.trade.common.model.token.TokenResponse;
 import com.trade.common.util.CallClient;
 import com.trade.common.util.JsonUtil;
 import com.trade.md.entity.MdIngestJob;
+import com.trade.md.mapper.KisToMdBarsMapper;
+import com.trade.md.mapper.MdBarsDao;
 import com.trade.md.model.dto.KisDailyPriceResponse;
 import com.trade.md.model.dto.Md;
+import com.trade.md.model.dto.MdBarRow;
 import com.trade.md.repository.MdIngestJobRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.trade.common.constant.staticConst.*;
@@ -40,111 +44,137 @@ public class MdService {
     private final CallClient callClient;
     private final localCommunication localCommunication;
     private final KisAuthConfig kisAuthConfig;
+    private final MdBarsDao mdBarsDao;
 
     private Map<String, String> newHeaders() {
         return new HashMap<>(staticConst.headers);
     }
 
     @Transactional
-    public Md.ResponseBars KISDataParsingAndSavingToJob(Md.@Valid RequestBars request, String token) {
+    public Md.ResponseBars ingestDailyBars(Md.@Valid RequestBars request, String token) {
         Snowflake snowflake = new Snowflake();
 
         String instrumentId = request.getInstrumentId();
-        String jobId = "JOB_" + BARS + snowflake.nextId() ;
-        String resultCode,resultMsg;
+        String jobId = "mdjob_" + snowflake.nextId();
 
-        CatalogInstruments catalogInstruments = catalogInstrumentsDao.selectByPrimaryKey(instrumentId);
-
-        MdIngestJob mdIngestJob = getMdIngestJob(jobId, catalogInstruments, JobStatus.RUNNING, null, null);
-
-        saveJobStep(mdIngestJob);
-
-        String kisAccessKey = getKisRedisAccessKey(token);
-        String isCd = catalogInstruments.getSymbol();
-        log.info("kisAccessKey : {}",kisAccessKey);
-
-        Map<String,String> kisHeaders =  makeSendHeaders(kisAccessKey);
-        log.debug("headers : {}",kisHeaders);
-
-        String url = kisAuthConfig.url().inquireDailyPrice() + "?FID_COND_MRKT_DIV_CODE=" + KRX_FID_COND_MARKT_DIV_CODE + "&FID_INPUT_ISCD="+isCd +
-                "&FID_PERIOD_DIV_CODE=" + staticConst.PERIOD_DIV_CODE_D + "&FID_ORG_ADJ_PRC=" + staticConst.ORG_ADJ_PRC_1;
-
-        log.info("url : {}",url);
-
-        CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
-
-        if(!result.headers().get("tr_id").getFirst().equals(staticConst.INGEST_TR_ID_DAILY)){
-            throw new CustomException(ErrorCode.MD_JOB_TR_ID_WARN);
-        }
-
-        KisDailyPriceResponse responseRecord = JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
-        resultCode = responseRecord.rt_cd();
-        resultMsg = responseRecord.msg1();
-
-        log.info("rt_cd={}, msg={}", responseRecord.rt_cd(), responseRecord.msg1());
-        log.info("rows={}", responseRecord.output() != null ? responseRecord.output().size() : 0);
-
-        if(!(resultCode != null && resultCode.equals("0"))){
-
-            mdIngestJob = getMdIngestJob(jobId, catalogInstruments, JobStatus.FAILED, resultCode , resultMsg);
-            saveJobStep(mdIngestJob);
-
-            throw new CustomException(ErrorCode.SERVER_ERROR);
-        }
+        CatalogInstruments inst = catalogInstrumentsDao.selectByPrimaryKey(instrumentId);
+        if (inst == null) throw new CustomException(ErrorCode.NOT_FOUND, "instrument not found");
 
 
-        KisDailyPriceResponse.Output first = responseRecord.output().getFirst();
-        log.info("first date={}, close={}", first.stck_bsop_date(), first.stck_clpr());
-
-        return null;
-    }
-
-    private static MdIngestJob getMdIngestJob(String jobId, CatalogInstruments catalogInstruments, JobStatus status, String resultCode, String resultMsg) {
-
-        return MdIngestJob.builder()
+        MdIngestJob job = MdIngestJob.builder()
                 .jobId(jobId)
-                .market(catalogInstruments.getMarket())
+                .market(inst.getMarket())
                 .jobType(BARS)
-                .status(status.getStatus())
+                .status(JobStatus.RUNNING.getStatus())
                 .startedAt(LocalDateTime.now())
-                .errCode(resultCode)
-                .errMsg(resultMsg)
                 .build();
+        mdIngestJobRepository.save(job);
+
+        try {
+            String kisAccessKey = getKisRedisAccessKey(token);
+            Map<String, String> kisHeaders = makeSendHeaders(kisAccessKey);
+
+            String url = kisAuthConfig.url().inquireDailyPrice()
+                    + "?FID_COND_MRKT_DIV_CODE=" + KRX_FID_COND_MARKT_DIV_CODE
+                    + "&FID_INPUT_ISCD=" + inst.getSymbol()
+                    + "&FID_PERIOD_DIV_CODE=" + PERIOD_DIV_CODE_D
+                    + "&FID_ORG_ADJ_PRC=" + ORG_ADJ_PRC_1;
+
+            log.info("KIS URL: {}", url);
+
+            // KIS 호출
+            CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
+
+            if (result.headers() != null && result.headers().get("tr_id") != null) {
+                String trId = result.headers().get("tr_id").getFirst();
+                if (!INGEST_TR_ID_DAILY.equals(trId)) {
+                    log.warn("tr_id mismatch. expected={}, actual={}", INGEST_TR_ID_DAILY, trId);
+                }
+            }
+
+            KisDailyPriceResponse kis = JsonUtil.getInstance()
+                    .decodeFromJson(result.body(), KisDailyPriceResponse.class);
+
+            if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
+                // job FAILED 업데이트
+                updateJobFailed(jobId, kis != null ? kis.rt_cd() : "null", kis != null ? kis.msg1() : "null response");
+                throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + (kis != null ? kis.msg1() : "null"));
+            }
+
+            int fetched = (kis.output() == null) ? 0 : kis.output().size();
+
+            // md_bars rows 변환
+            List<MdBarRow> bars = KisToMdBarsMapper.toDailyBars(
+                    instrumentId,
+                    inst.getMarket(),
+                    inst.getCurrency(),
+                    kis
+            );
+
+            int upserted = 0;
+            if (!bars.isEmpty()) {
+                mdBarsDao.upsertBars(bars);
+                upserted = bars.size();
+            }
+
+            updateJobSuccess(jobId);
+
+            return Md.ResponseBars.builder()
+                    .jobId(jobId)
+                    .instrumentId(instrumentId)
+                    .market(inst.getMarket())
+                    .intervalCd("1d")
+                    .fetched(fetched)
+                    .upserted(upserted)
+                    .status(JobStatus.SUCCESS.getStatus())
+                    .message(kis.msg1())
+                    .build();
+
+        } catch (Exception e) {
+            updateJobFailed(jobId, "EXCEPTION", e.getMessage());
+            if (e instanceof CustomException ce) throw ce;
+            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+        }
     }
 
-    @Transactional
-    public void saveJobStep(MdIngestJob mdIngestJob) {
-        try {
-            mdIngestJobRepository.save(mdIngestJob);
-        }catch (CustomException e){
-            throw new CustomException(ErrorCode.SERVER_ERROR);
-        }
+    private void updateJobSuccess(String jobId) {
+        MdIngestJob job = mdIngestJobRepository.findById(jobId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
+        job.setStatus(JobStatus.SUCCESS.getStatus());
+        job.setEndedAt(LocalDateTime.now());
+        mdIngestJobRepository.save(job);
+    }
+
+    private void updateJobFailed(String jobId, String errCode, String errMsg) {
+        MdIngestJob job = mdIngestJobRepository.findById(jobId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
+        job.setStatus(JobStatus.FAILED.getStatus());
+        job.setEndedAt(LocalDateTime.now());
+        job.setErrCode(errCode);
+        job.setErrMsg(errMsg);
+        mdIngestJobRepository.save(job);
     }
 
     @Transactional
     public String getKisRedisAccessKey(String token) {
         TokenResponse cachedToken = kisTokenStore.getAccessToken();
-
         if (cachedToken != null && cachedToken.getAccessToken() != null) {
             return cachedToken.getAccessToken();
-        } else {
-            Map<String, String> headers = newHeaders();
-            headers.put(staticConst.AUTHORIZATION, staticConst.BEARER + token);
-
-            String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
-
-            TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);
-            kisTokenStore.storeAccessToken(tokenResponse);
-
-            return tokenResponse.getAccessToken();
         }
+
+        Map<String, String> headers = newHeaders();
+        headers.put(staticConst.AUTHORIZATION, staticConst.BEARER + token);
+
+        String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
+        TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);
+        kisTokenStore.storeAccessToken(tokenResponse);
+
+        return tokenResponse.getAccessToken();
     }
 
     public Map<String, String> makeSendHeaders(String token) {
         Map<String, String> headers = newHeaders();
-        log.debug("makeSendHeaders : {}", headers);
-
-        headers.put(staticConst.AUTHORIZATION, staticConst.BEARER + token);
+        headers.put("authorization", staticConst.BEARER + token);
         headers.put("custtype", staticConst.CUST_TYPE);
         headers.put("appkey", kisAuthConfig.key().app());
         headers.put("appsecret", kisAuthConfig.key().secret());

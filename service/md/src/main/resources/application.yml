@@ -16,8 +16,10 @@ spring:
         format_sql: true
 
 mybatis:
-  mapper-locations: classpath:/mybatis/mapper/**/*.xml
-  type-aliases-package: com.trade.catalog.model
+  mapper-locations:
+    - classpath:/mybatis/mapper/**/*.xml
+    - classpath*:/mybatis/mapper/**/*.xml
+  type-aliases-package: com.trade.md.model
   configuration:
     map-underscore-to-camel-case: true
 
@@ -52,3 +54,7 @@ trade:
     url:
       current-price: https://openapivts.koreainvestment.com:29443/uapi/domestic-stock/v1/quotations/inquire-price
       inquire-daily-price : https://openapivts.koreainvestment.com:29443/uapi/domestic-stock/v1/quotations/inquire-daily-price
+
+local:
+  cmc:
+    retry-kis-token: http://localhost:8081/api/kis/auth/oauth/token
