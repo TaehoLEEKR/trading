@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ public class MdBulkIngestService {
 
         Snowflake snowflake = new Snowflake();
         String jobId = "mdjob_" + snowflake.nextId();
+        List<MdIngest.Failure> failures = new ArrayList<>();
 
         // 유니버스 종목 목록 조회
         List<CatalogInstruments> instruments = universeInstrumentDao.selectInstrumentsByUniverse(req.getUniverseId(), limit);
@@ -108,20 +110,27 @@ public class MdBulkIngestService {
                     );
 
                     if (!bars.isEmpty()) {
-                        upserted = mdTransactionService.upsertBarsInNewTx(bars);
+                        upserted += mdTransactionService.upsertBarsInNewTx(bars);
                     }
 
                 } catch (Exception e) {
                     failed++;
-                    resp.failures(List.of());
-                    resp.build().getFailures().add(
-                            MdIngest.Failure.builder()
+                    failures.add(MdIngest.Failure.builder()
                                     .instrumentId(inst.getInstrumentId())
                                     .symbol(inst.getSymbol())
                                     .errCode("INSTRUMENT_FAIL")
                                     .errMsg(e.getMessage())
-                                    .build()
-                    );
+                                    .build());
+
+//                    resp.failures(List.of());
+//                    resp.build().getFailures().add(
+//                            MdIngest.Failure.builder()
+//                                    .instrumentId(inst.getInstrumentId())
+//                                    .symbol(inst.getSymbol())
+//                                    .errCode("INSTRUMENT_FAIL")
+//                                    .errMsg(e.getMessage())
+//                                    .build()
+//                    );
                     // 실패해도 전체 job은 계속 진행
                     log.warn("instrument ingest failed. instrumentId={}, symbol={}, msg={}",
                             inst.getInstrumentId(), inst.getSymbol(), e.getMessage());
@@ -134,10 +143,9 @@ public class MdBulkIngestService {
                     + ", upserted=" + upserted
                     + ", failed=" + failed;
 
-            if (upserted == 0) {
+            if (failed == instruments.size()) {
                 mdJobWriter.markFailed(jobId, "ALL_FAILED", summary);
             } else {
-
                 mdJobWriter.markSuccess(jobId, summary);
             }
 
@@ -149,7 +157,7 @@ public class MdBulkIngestService {
                     .fetched(fetched)
                     .upserted(upserted)
                     .failed(failed)
-                    .failures(resp.build().getFailures())
+                    .failures(failures)
                     .build();
 
         } catch (Exception e) {
