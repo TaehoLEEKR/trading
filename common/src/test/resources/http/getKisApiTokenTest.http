@@ -7,9 +7,9 @@ Content-Type: application/json
   "password": "23467811"
 }
 
-###
+### kis API 토큰 가져오기
 POST http://localhost:8081/api/kis/auth/oauth/token
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgyODg4MTgsImV4cCI6MTc2ODI5NzgxOCwicm9sZSI6IlVTRVIifQ.DBFZ1K5e5x2E3bcszg0PWW5Cu8L89SBwfwznCAyffAQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNTU2MjEsImV4cCI6MTc2ODM2NDYyMSwicm9sZSI6IlVTRVIifQ.N308EaGuSUC7erURWu4HGlWeMJsbA6bq-_HsIdiGgvM
 
 
 ###

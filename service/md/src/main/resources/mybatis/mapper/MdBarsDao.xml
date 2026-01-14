@@ -42,4 +42,31 @@
         updated_at = CURRENT_TIMESTAMP(3)
     </insert>
 
+    <select id="selectBars" resultType="com.trade.md.model.dto.MdBarRow">
+        <![CDATA[
+            SELECT
+                instrument_id,
+                market,
+                interval_cd,
+                ts,
+                o,
+                h,
+                l,
+                c,
+                v,
+                currency
+            FROM md_bars
+                WHERE instrument_id = #{instrumentId}
+                    AND interval_cd = #{intervalCd}
+                    AND ts >= #{fromTs}
+                    AND ts <= #{toTs}
+            ORDER BY ts
+        ]]>
+        <choose>
+            <when test="order == 'DESC'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+        LIMIT #{size}
+    </select>
+
 </mapper>

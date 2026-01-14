@@ -2,7 +2,7 @@
 ###
 POST http://localhost:8083/v1/api/md/ingest/bars
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgyODc3MjgsImV4cCI6MTc2ODI5NjcyOCwicm9sZSI6IlVTRVIifQ.zTR3BmcN1eEyTam5oXkuMrGVfBPFQBZ2C9GUYEIsUxA
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNTU3MDYsImV4cCI6MTc2ODM2NDcwNiwicm9sZSI6IlVTRVIifQ.39twMtH9QcA1yctzR7Qzfx9mN_xh0uTeZJiTgvQd-D8
 
 {
   "instrumentId": "0006dadf-45da-475d-b8a3-c178c276633c",
@@ -10,3 +10,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiO
   "from": "2026-01-13",
   "to": "2026-01-14"
 }
+
+### md bars chart
+GET http://localhost:8083/v1/api/md/bars?instrumentId=0006dadf-45da-475d-b8a3-c178c276633c&intervalCd=1d&from=2026-01-01&to=2026-01-14&size=200&order=ASC
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNTU3MDYsImV4cCI6MTc2ODM2NDcwNiwicm9sZSI6IlVTRVIifQ.39twMtH9QcA1yctzR7Qzfx9mN_xh0uTeZJiTgvQd-D8

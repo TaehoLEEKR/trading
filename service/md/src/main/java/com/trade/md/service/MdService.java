@@ -16,6 +16,7 @@ import com.trade.common.util.JsonUtil;
 import com.trade.md.entity.MdIngestJob;
 import com.trade.md.mapper.KisToMdBarsMapper;
 import com.trade.md.mapper.MdBarsDao;
+import com.trade.md.model.dto.IngestDto;
 import com.trade.md.model.dto.KisDailyPriceResponse;
 import com.trade.md.model.dto.Md;
 import com.trade.md.model.dto.MdBarRow;
@@ -207,5 +208,53 @@ public class MdService {
         headers.put("appsecret", kisAuthConfig.key().secret());
         headers.put("tr_id", staticConst.INGEST_TR_ID_DAILY);
         return headers;
+    }
+
+    public IngestDto.BarsResponse getBars(String instrumentId, String intervalCd, String from, String to, int size, String order) {
+
+        if (instrumentId == null || instrumentId.isBlank()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "instrumentId is required");
+        }
+
+        if (!"1d".equals(intervalCd)) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "1d for now");
+        }
+
+        if (size <= 0) {
+            size = 200;
+        }
+        if (size > 1000){ // 걍 고정 혹시 모름
+            size = 1000;
+        }
+
+        String ord = (order != null && order.equalsIgnoreCase("DESC")) ? "DESC" : "ASC";
+
+        // 날짜를 ts로 변환 (일봉은 00:00:00 통일)
+        String fromTs = from + " 00:00:00";
+        String toTs   = to   + " 23:59:59";
+
+        List<MdBarRow> rows = mdBarsDao.selectBars(instrumentId, intervalCd, fromTs, toTs, size, ord);
+
+        List<IngestDto.Bar> bars = rows.stream().map(r ->
+                IngestDto.Bar.builder()
+                        .ts(r.ts().toString())
+                        .o(r.o().toPlainString())
+                        .h(r.h().toPlainString())
+                        .l(r.l().toPlainString())
+                        .c(r.c().toPlainString())
+                        .v(r.v().toPlainString())
+                        .build()
+        ).toList();
+
+        return IngestDto.BarsResponse.builder()
+                .instrumentId(instrumentId)
+                .intervalCd(intervalCd)
+                .from(from)
+                .to(to)
+                .size(size)
+                .order(ord)
+                .count(bars.size())
+                .bars(bars)
+                .build();
     }
 }
