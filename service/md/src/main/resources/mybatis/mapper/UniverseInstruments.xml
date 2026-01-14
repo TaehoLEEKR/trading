@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.trade.md.mapper.UniverseInstrumentDao">
+
+    <select id="selectInstrumentsByUniverse" resultType="com.trade.catalog.entity.CatalogInstruments">
+        SELECT
+            ci.instrument_id,
+            ci.market,
+            ci.exchange,
+            ci.symbol,
+            ci.name,
+            ci.currency,
+            ci.is_active,
+            ci.updated_at
+        FROM catalog_universe_instruments cui
+                 JOIN catalog_instruments ci ON ci.instrument_id = cui.instrument_id
+        WHERE cui.universe_id = #{universeId}
+          AND ci.is_active = 1
+        ORDER BY ci.name ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

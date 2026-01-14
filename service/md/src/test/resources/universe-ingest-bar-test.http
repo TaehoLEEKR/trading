@@ -1,0 +1,10 @@
+### universe bulk ingest daily bars
+POST http://localhost:8083/v1/api/md/universe/ingest/bars
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNjQ3NTMsImV4cCI6MTc2ODM3Mzc1Mywicm9sZSI6IlVTRVIifQ.l8je0hDgZs5nShl4yaQT6TKJ-EbfWhC4l4e0IWG3FJQ
+
+{
+  "universeId": "268984484750237696",
+  "intervalCd": "1d",
+  "maxInstruments": 200
+}
