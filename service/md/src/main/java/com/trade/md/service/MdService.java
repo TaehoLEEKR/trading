@@ -21,6 +21,8 @@ import com.trade.md.model.dto.KisDailyPriceResponse;
 import com.trade.md.model.dto.Md;
 import com.trade.md.model.dto.MdBarRow;
 import com.trade.md.repository.MdIngestJobRepository;
+import com.trade.md.service.transaction.MdJobTxService;
+import com.trade.md.service.transaction.MdTransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,11 +50,14 @@ public class MdService {
     private final KisAuthConfig kisAuthConfig;
     private final MdBarsDao mdBarsDao;
 
+    private final MdTransactionService mdTransactionService;
+    private final MdJobTxService mdJobTxService;
+
     private Map<String, String> newHeaders() {
         return new HashMap<>(staticConst.headers);
     }
 
-    @Transactional
+
     public Md.ResponseBars ingestDailyBars(Md.@Valid RequestBars request, String token) {
         Snowflake snowflake = new Snowflake();
 
@@ -71,7 +76,7 @@ public class MdService {
                 .startedAt(LocalDateTime.now())
                 .build();
 //        mdIngestJobRepository.save(job);
-        start(job);
+        mdJobTxService.start(job);
 
         try {
             String kisAccessKey = getKisRedisAccessKey(token);
@@ -100,7 +105,7 @@ public class MdService {
 
             if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
                 // job FAILED 업데이트
-                failed(jobId, kis != null ? kis.rt_cd() : "null", kis != null ? kis.msg1() : "null response");
+                mdJobTxService.failed(jobId, kis != null ? kis.rt_cd() : "null", kis != null ? kis.msg1() : "null response");
                 throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + (kis != null ? kis.msg1() : "null"));
             }
 
@@ -116,11 +121,12 @@ public class MdService {
 
             int upserted = 0;
             if (!bars.isEmpty()) {
-                mdBarsDao.upsertBars(bars);
-                upserted = bars.size();
+//                mdBarsDao.upsertBars(bars);
+//                upserted = bars.size();
+                upserted = mdTransactionService.upsertBarsInNewTx(bars);
             }
 
-            success(jobId);
+            mdJobTxService.success(jobId);
 
             return Md.ResponseBars.builder()
                     .jobId(jobId)
@@ -134,56 +140,12 @@ public class MdService {
                     .build();
 
         } catch (Exception e) {
-            failed(jobId, "EXCEPTION", e.getMessage());
+            mdJobTxService.failed(jobId, "EXCEPTION", e.getMessage());
             if (e instanceof CustomException ce) throw ce;
             throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void start(MdIngestJob job) {
-        mdIngestJobRepository.save(job);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void success(String jobId) {
-        MdIngestJob job = mdIngestJobRepository.findById(jobId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
-        job.setStatus(JobStatus.SUCCESS.getStatus());
-        job.setEndedAt(LocalDateTime.now());
-        mdIngestJobRepository.save(job);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void failed(String jobId, String errCode, String errMsg) {
-                MdIngestJob job = mdIngestJobRepository.findById(jobId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
-        job.setStatus(JobStatus.FAILED.getStatus());
-        job.setEndedAt(LocalDateTime.now());
-        job.setErrCode(errCode);
-        job.setErrMsg(errMsg);
-        mdIngestJobRepository.save(job);
-    }
-
-//    private void updateJobSuccess(String jobId) {
-//        MdIngestJob job = mdIngestJobRepository.findById(jobId)
-//                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
-//        job.setStatus(JobStatus.SUCCESS.getStatus());
-//        job.setEndedAt(LocalDateTime.now());
-//        mdIngestJobRepository.save(job);
-//    }
-//
-//    private void updateJobFailed(String jobId, String errCode, String errMsg) {
-//        MdIngestJob job = mdIngestJobRepository.findById(jobId)
-//                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
-//        job.setStatus(JobStatus.FAILED.getStatus());
-//        job.setEndedAt(LocalDateTime.now());
-//        job.setErrCode(errCode);
-//        job.setErrMsg(errMsg);
-//        mdIngestJobRepository.save(job);
-//    }
-
-    @Transactional
     public String getKisRedisAccessKey(String token) {
         TokenResponse cachedToken = kisTokenStore.getAccessToken();
         if (cachedToken != null && cachedToken.getAccessToken() != null) {
