@@ -1,7 +1,7 @@
 package com.trade.run;
 
 import com.trade.common.util.Shutdown;
-import com.trade.run.config.MdIngestProperties;
+import com.trade.run.config.RunProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,8 +13,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Slf4j
-@SpringBootApplication(scanBasePackages = {"com.trade.*"})
-@EnableConfigurationProperties(MdIngestProperties.class)
+@SpringBootApplication(scanBasePackages = {"com.trade"})
+@EnableConfigurationProperties(RunProperties.class)
 @EnableScheduling
 @EnableAsync
 public class RunApplication {

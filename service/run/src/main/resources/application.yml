@@ -32,9 +32,17 @@ jwt:
   access-token-validity-seconds: 9000
 
 run:
-  md:
-    cron : "0 40 15 * * MON-FRI"
-    baseUrl: http://localhost:8083
-
-internal:
+  internal:
     token:
+
+  md:
+    base-url: http://localhost:8083
+    cron: "0 40 15 * * MON-FRI"
+    interval-cd: "1d"
+    market: "KR_STOCK"
+    limit: 50
+    max-instruments: 300
+    concurrency: 1
+
+  catalog:
+    base-url: http://localhost:8082
