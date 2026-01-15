@@ -1,7 +1,9 @@
 package com.trade.catalog.controller;
 
 import com.trade.catalog.model.dto.UniverseDto;
+import com.trade.catalog.model.dto.UniverseTargetDto;
 import com.trade.catalog.model.dto.instrumentsDto;
+import com.trade.catalog.service.UniverseInternalService;
 import com.trade.catalog.service.UniversesService;
 import com.trade.common.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class UniverseController {
 
     private final UniversesService universesService;
+    private final UniverseInternalService universeInternalService;
 
     @PostMapping
     public ApiResponse<?> createUniverse(
@@ -43,5 +46,12 @@ public class UniverseController {
     ) {
         String token = httpServletRequest.getHeader("Authorization").replace("Bearer ", "");
         return ApiResponse.success(universesService.getUniverseInstruments(token, universeId, size, offset));
+    }
+
+
+
+    @GetMapping("/internal/targets")
+    public ApiResponse<UniverseTargetDto.UniverseTargetsResponse> getTargets(@ModelAttribute UniverseTargetDto.UniverseTargetsQuery q) {
+        return ApiResponse.success(universeInternalService.getAutoIngestTargets(q.getIntervalCd(),q.getMarket(), q.getLimit()));
     }
 }

@@ -34,4 +34,18 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <select id="selectAutoIngestTargets" resultType="com.trade.catalog.model.dto.UniverseTargetDto$UniverseTarget">
+        SELECT
+            universe_id AS universeId,
+            market AS market,
+            auto_ingest_interval_cd AS intervalCd,
+            auto_ingest_max_instruments AS maxInstruments
+        FROM catalog_universes
+        WHERE auto_ingest_yn = 1
+          AND auto_ingest_interval_cd = #{intervalCd}
+          AND (#{market} IS NULL OR #{market} = '' OR market = #{market})
+        ORDER BY updated_at DESC, universe_id DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

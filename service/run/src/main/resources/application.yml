@@ -1,3 +1,6 @@
+server:
+  port: 8888
+
 spring:
   datasource:
     url: jdbc:mysql://localhost:13306/trading?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
@@ -27,3 +30,11 @@ jwt:
   issuer: trading-auth
   secret:
   access-token-validity-seconds: 9000
+
+run:
+  md:
+    cron : "0 40 15 * * MON-FRI"
+    baseUrl: http://localhost:8083
+
+internal:
+    token:

@@ -1,8 +1,8 @@
 rootProject.name = 'trading'
 
-include 'run'
 include 'common'
 include 'service'
 include 'service:auth'
 include 'service:catalog'
 include 'service:md'
+include 'service:run'

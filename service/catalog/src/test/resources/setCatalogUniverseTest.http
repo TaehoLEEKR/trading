@@ -12,11 +12,11 @@ Content-Type: application/json
 ###
 POST http://localhost:8082/v1/api/universes
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNzMwNjgsImV4cCI6MTc2ODM4MjA2OCwicm9sZSI6IlVTRVIifQ.WhlKPjodRxzUKusDgtDrF4fdJdDQG-kPwD1_OlerxK8
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3Njg0NDA2NTUsImV4cCI6MTc2ODQ0OTY1NSwicm9sZSI6IlVTRVIifQ.7uAcdr_lkz9soJJJ1nTnlUw6TJFZrYjENFM-w79p8FA
 
 {
-  "name": "테스트 종목",
-  "description": "테스트"
+  "name": "테스트 종목2",
+  "description": "테스트2"
 }
 
 ###cd866061-08f8-461a-9a3e-10d1258689e1,000880
@@ -35,3 +35,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiO
 ###
 GET http://localhost:8082/v1/api/universes/268984484750237696/instruments
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3NjgzNzMwNjgsImV4cCI6MTc2ODM4MjA2OCwicm9sZSI6IlVTRVIifQ.WhlKPjodRxzUKusDgtDrF4fdJdDQG-kPwD1_OlerxK8
+
+
+###
+GET http://localhost:8082/v1/api/universes/internal/targets?intervalCd=1d&market=KR_STOCK&limit=1000
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmFkaW5nLWF1dGgiLCJzdWIiOiIwMjlmMjJjZS0yMWIyLTQ4MjItOGViMS0wMjQzNDZlM2ExZTUiLCJpYXQiOjE3Njg0NDA2NTUsImV4cCI6MTc2ODQ0OTY1NSwicm9sZSI6IlVTRVIifQ.7uAcdr_lkz9soJJJ1nTnlUw6TJFZrYjENFM-w79p8FA
+Accept: application/json

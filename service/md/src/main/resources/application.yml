@@ -58,3 +58,10 @@ trade:
 local:
   cmc:
     retry-kis-token: http://localhost:8081/api/kis/auth/oauth/token
+
+internal:
+  auth:
+    enabled: true
+    token:
+    protected-paths:
+      - /v1/api/md/universe/ingest/**
