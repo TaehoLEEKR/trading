@@ -9,11 +9,13 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 public class JwtAuthFilter implements Filter {
 
     private final JwtProvider jwtProvider;
@@ -41,12 +43,14 @@ public class JwtAuthFilter implements Filter {
 
         String auth = req.getHeader("Authorization");
         if (auth == null || !auth.startsWith("Bearer ")) {
+            log.warn("Missing Authorization header");
             writeError(res, ErrorCode.UNAUTHORIZED);
             return;
         }
 
         String token = auth.substring("Bearer ".length()).trim();
         if (token.isBlank()) {
+            log.warn("Empty token");
             writeError(res, ErrorCode.UNAUTHORIZED);
             return;
         }
@@ -59,14 +63,27 @@ public class JwtAuthFilter implements Filter {
 
             chain.doFilter(request, response);
         } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Invalid token", e);
             writeError(res, ErrorCode.UNAUTHORIZED);
         }
     }
 
     private boolean isWhitelisted(String path) {
         if (path == null) return true;
+
         for (String prefix : whitelistPrefix) {
-            if (path.startsWith(prefix)) return true;
+            if (prefix == null || prefix.isBlank()) continue;
+
+            if (path.equals(prefix)) return true;
+
+            if (prefix.endsWith("/")) {
+                if (path.startsWith(prefix)) return true;
+                continue;
+            }
+
+            if (path.startsWith(prefix) && (path.length() == prefix.length() || path.charAt(prefix.length()) == '/')) {
+                return true;
+            }
         }
         return false;
     }

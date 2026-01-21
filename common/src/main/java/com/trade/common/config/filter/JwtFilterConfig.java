@@ -15,10 +15,14 @@ public class JwtFilterConfig {
     @Bean
     public FilterRegistrationBean<JwtAuthFilter> jwtAuthFilter(JwtProvider jwtProvider) {
         FilterRegistrationBean<JwtAuthFilter> bean = new FilterRegistrationBean<>();
-        bean.setFilter(new JwtAuthFilter(jwtProvider, List.of(
+        bean.setFilter(new JwtAuthFilter(jwtProvider,List.of(
                 "/v1/api/auth/login",
                 "/v1/api/auth/signup",
                 "/v1/api/auth/refresh",
+                "/v1/api/universes/internal/",
+                "/v1/api/universes/internal",
+                "/v1/api/md/universe/ingest/",
+                "/api/kis/auth/oauth/",
                 "/actuator",
                 "/health"
         )));
