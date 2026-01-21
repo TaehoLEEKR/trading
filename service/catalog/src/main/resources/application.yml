@@ -35,3 +35,11 @@ jwt:
   issuer: trading-auth
   secret:
   access-token-validity-seconds: 9000
+
+
+run:
+  internal:
+    enabled: true
+    token:
+    protected-paths:
+      - /v1/api/universes/internal/**

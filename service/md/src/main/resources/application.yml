@@ -59,8 +59,9 @@ local:
   cmc:
     retry-kis-token: http://localhost:8081/api/kis/auth/oauth/token
 
-internal:
-  auth:
+
+run:
+  internal:
     enabled: true
     token:
     protected-paths:
