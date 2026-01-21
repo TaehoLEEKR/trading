@@ -22,6 +22,7 @@ import com.trade.md.service.transaction.MdTransactionService;
 import lombok.RequiredArgsConstructor;
 import com.trade.md.service.MdJobWriter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -48,11 +49,14 @@ public class MdBulkIngestService {
     private final localCommunication localCommunication;
     private final KisAuthConfig kisAuthConfig;
 
+    @Value("${run.internal.token}")
+    private String runInternalToken;
+
     private Map<String, String> newHeaders() {
         return new HashMap<>(staticConst.headers);
     }
 
-    public MdIngest.UniverseBarsResponse ingestDailyBarsByUniverse(MdIngest.UniverseBarsRequest req, String token) {
+    public MdIngest.UniverseBarsResponse ingestDailyBarsByUniverse(MdIngest.UniverseBarsRequest req) {
 
         if (!"1d".equals(req.getIntervalCd())) {
             throw new CustomException(ErrorCode.NOT_FOUND, "intervalCd only supports 1d for now");
@@ -91,7 +95,7 @@ public class MdBulkIngestService {
 
         try {
 
-            String kisAccessKey = getKisRedisAccessKey(token);
+            String kisAccessKey = getKisRedisAccessKey();
             Map<String, String> kisHeaders = makeSendHeaders(kisAccessKey);
 
             // 종목별 순차 수집
@@ -193,14 +197,14 @@ public class MdBulkIngestService {
     }
 
 
-    private String getKisRedisAccessKey(String token) {
+    private String getKisRedisAccessKey() {
         TokenResponse cachedToken = kisTokenStore.getAccessToken();
         if (cachedToken != null && cachedToken.getAccessToken() != null) {
             return cachedToken.getAccessToken();
         }
 
         Map<String, String> headers = newHeaders();
-        headers.put(staticConst.AUTHORIZATION, staticConst.BEARER + token);
+        headers.put(staticConst.X_INTERNAL_TOKEN,runInternalToken );
 
         String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
         TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);

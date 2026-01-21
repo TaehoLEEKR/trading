@@ -24,7 +24,7 @@ public class MdIngestController {
             HttpServletRequest req,
             @RequestBody @Valid MdIngest.UniverseBarsRequest request
     ) {
-        String token = req.getHeader("Authorization").replace("Bearer ", "");
-        return ApiResponse.success(mdBulkIngestService.ingestDailyBarsByUniverse(request, token));
+//        String token = req.getHeader("Authorization").replace("Bearer ", "");
+        return ApiResponse.success(mdBulkIngestService.ingestDailyBarsByUniverse(request));
     }
 }
