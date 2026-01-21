@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication(scanBasePackages = {"com.trade.common","com.trade"})
+@SpringBootApplication(scanBasePackages = {"com.trade.catalog", "com.trade.common"})
 @EnableJpaAuditing
 @ConfigurationPropertiesScan(basePackages = "com.trade.common.config")
 @MapperScan("com.trade.catalog.mapper")
