@@ -10,6 +10,7 @@ public class staticConst {
     public static final String HEADER_RUN_ID = "X-Run-Id";
     // Headers
     public static final String AUTHORIZATION = "Authorization";
+    public static final String X_INTERNAL_TOKEN = "X-Internal-Token";
     public static final String BEARER = "Bearer ";
 
     public static Map<String,String> headers = Map.of("Content-Type","application/json; charset=utf-8");
