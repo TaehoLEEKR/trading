@@ -30,20 +30,24 @@ public class WebClientConfig {
     }
 
     @Bean(name = "mdWebClient")
-    public WebClient mdWebClient(WebClient.Builder builder, RunProperties props) {
-        return builder
+    public WebClient mdWebClient(RunProperties props) {
+        return WebClient.builder()
                 .baseUrl(props.md().baseUrl())
                 .clientConnector(new ReactorClientHttpConnector(nettyHttpClient()))
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("X-Internal-Token", props.internal().token())
                 .build();
     }
 
     @Bean(name = "catalogWebClient")
-    public WebClient catalogWebClient(WebClient.Builder builder, RunProperties props) {
-        return builder
+    public WebClient catalogWebClient(RunProperties props) {
+        return WebClient.builder()
                 .baseUrl(props.catalog().baseUrl())
                 .clientConnector(new ReactorClientHttpConnector(nettyHttpClient()))
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("X-Internal-Token", props.internal().token())
                 .build();
     }
 
