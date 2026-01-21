@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
 
-@ConfigurationProperties(prefix = "internal.auth")
+@ConfigurationProperties(prefix = "run.internal")
 public record InternalAuthProperties(
         boolean enabled,
         String token,

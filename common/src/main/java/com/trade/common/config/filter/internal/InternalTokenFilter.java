@@ -1,4 +1,4 @@
-package com.trade.common.filter.internal;
+package com.trade.common.config.filter.internal;
 
 import com.trade.common.config.InternalAuthProperties;
 import jakarta.servlet.FilterChain;
@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @RequiredArgsConstructor
+@Slf4j
 public class InternalTokenFilter extends OncePerRequestFilter {
 
     private final InternalAuthProperties props;
@@ -42,10 +44,12 @@ public class InternalTokenFilter extends OncePerRequestFilter {
 
         if (expected == null || expected.isBlank()) {
             res.sendError(500, "Internal token is not configured");
+            log.error("Internal token is not configured");
             return;
         }
         if (provided == null || provided.isBlank()) {
             res.sendError(401, "Missing X-Internal-Token");
+            log.error("401 Missing X-Internal-Token");
             return;
         }
 
@@ -55,6 +59,7 @@ public class InternalTokenFilter extends OncePerRequestFilter {
         );
         if (!ok) {
             res.sendError(401, "Invalid X-Internal-Token");
+            log.error("401 Invalid X-Internal-Token");
             return;
         }
 

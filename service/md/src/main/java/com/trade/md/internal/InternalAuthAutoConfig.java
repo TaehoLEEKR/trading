@@ -1,4 +1,4 @@
-package com.trade.common.filter.internal;
+package com.trade.md.internal;
 
 import com.trade.common.config.InternalAuthProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(InternalAuthProperties.class)
-@ConditionalOnProperty(prefix = "internal.auth", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "rnn.internal", name = "enabled", havingValue = "true")
 public class InternalAuthAutoConfig {
 
     @Bean
