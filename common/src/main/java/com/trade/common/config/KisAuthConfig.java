@@ -16,7 +16,9 @@ public record KisAuthConfig(
             String authDomainUrl,
             String authDomain,
             String authDisposalUrl,
-            String authDisposalDomain
+            String authDisposalDomain,
+            Integer skewSeconds,
+            String grantType
     ) {}
     public record Socket(
             String url,

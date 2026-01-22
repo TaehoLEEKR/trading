@@ -48,6 +48,8 @@ trade:
       auth-domain: https://openapivts.koreainvestment.com:29443
       auth-disposal-url: /oauth2/revokeP
       auth-disposal-domain: https://openapivts.koreainvestment.com:29443
+      skew-seconds: 60
+      grant-type: client_credentials
     socket:
       url: /oauth2/Approval
       domain: https://openapivts.koreainvestment.com:29443
