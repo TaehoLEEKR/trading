@@ -37,10 +37,10 @@ run:
 
   md:
     base-url: http://localhost:8083
-    cron: "0 30 14 * * MON-FRI"
+    cron: "0 19 16 * * MON-FRI"
     interval-cd: "1d"
     market: "KR_STOCK"
-    limit: 50
+    limit: 2
     max-instruments: 300
     concurrency: 1
 

@@ -18,12 +18,17 @@ import com.trade.md.mapper.UniverseInstrumentDao;
 import com.trade.md.model.dto.KisDailyPriceResponse;
 import com.trade.md.model.dto.MdBarRow;
 import com.trade.md.model.dto.MdIngest;
+import com.trade.md.service.transaction.MdJobTxService;
 import com.trade.md.service.transaction.MdTransactionService;
 import lombok.RequiredArgsConstructor;
-import com.trade.md.service.MdJobWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.trade.md.kis.KisAccessTokenManager;
+import com.trade.md.kis.KisInvalidTokenException;
+import com.trade.md.kis.KisRateLimitException;
+import com.trade.md.kis.KisApiException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,18 +44,20 @@ import static com.trade.common.constant.staticConst.*;
 public class MdBulkIngestService {
 
     private final UniverseInstrumentDao universeInstrumentDao;
-    private final MdBarsDao mdBarsDao;
+//    private final MdBarsDao mdBarsDao;
     private final MdTransactionService mdTransactionService;
 
-    private final MdJobWriter mdJobWriter;
+//    private final MdJobWriter mdJobWriter;
 
-    private final KisTokenStore kisTokenStore;
+//    private final KisTokenStore kisTokenStore;
     private final CallClient callClient;
-    private final localCommunication localCommunication;
     private final KisAuthConfig kisAuthConfig;
+    private final MdJobTxService mdJobTxService;
+    private final KisAccessTokenManager kisAccessTokenManager;
 
-    @Value("${run.internal.token}")
-    private String runInternalToken;
+//    @Value("${run.internal.token}")
+//    private String runInternalToken;
+//    private final localCommunication localCommunication;
 
     private Map<String, String> newHeaders() {
         return new HashMap<>(staticConst.headers);
@@ -81,7 +88,7 @@ public class MdBulkIngestService {
                 .status(JobStatus.RUNNING.getStatus())
                 .startedAt(LocalDateTime.now())
                 .build();
-        mdJobWriter.saveRunning(job);
+        mdJobTxService.start(job);
 
         int fetched = 0;
         int upserted = 0;
@@ -95,13 +102,15 @@ public class MdBulkIngestService {
 
         try {
 
-            String kisAccessKey = getKisRedisAccessKey();
-            Map<String, String> kisHeaders = makeSendHeaders(kisAccessKey);
+//            String kisAccessKey = getKisRedisAccessKey();
+//            Map<String, String> kisHeaders = makeSendHeaders(kisAccessKey);
 
             // 종목별 순차 수집
             for (CatalogInstruments inst : instruments) {
                 try {
-                    KisDailyPriceResponse kis = callKisDailyPrice(inst, kisHeaders);
+//                    KisDailyPriceResponse kis = callKisDailyPrice(inst, kisHeaders);
+
+                    KisDailyPriceResponse kis = callKisDailyPriceWithRetry(inst);
 
                     int rows = (kis.output() == null) ? 0 : kis.output().size();
                     fetched += rows;
@@ -126,15 +135,6 @@ public class MdBulkIngestService {
                                     .errMsg(e.getMessage())
                                     .build());
 
-//                    resp.failures(List.of());
-//                    resp.build().getFailures().add(
-//                            MdIngest.Failure.builder()
-//                                    .instrumentId(inst.getInstrumentId())
-//                                    .symbol(inst.getSymbol())
-//                                    .errCode("INSTRUMENT_FAIL")
-//                                    .errMsg(e.getMessage())
-//                                    .build()
-//                    );
                     // 실패해도 전체 job은 계속 진행
                     log.warn("instrument ingest failed. instrumentId={}, symbol={}, msg={}",
                             inst.getInstrumentId(), inst.getSymbol(), e.getMessage());
@@ -148,9 +148,9 @@ public class MdBulkIngestService {
                     + ", failed=" + failed;
 
             if (failed == instruments.size()) {
-                mdJobWriter.markFailed(jobId, "ALL_FAILED", summary);
+                mdJobTxService.failed(jobId, "ALL_FAILED", summary);
             } else {
-                mdJobWriter.markSuccess(jobId, summary);
+                mdJobTxService.success(jobId, summary);
             }
 
             return MdIngest.UniverseBarsResponse.builder()
@@ -165,8 +165,82 @@ public class MdBulkIngestService {
                     .build();
 
         } catch (Exception e) {
-            mdJobWriter.markFailed(jobId, "JOB_EXCEPTION", e.getMessage());
+            mdJobTxService.failed(jobId, "JOB_EXCEPTION", e.getMessage());
             throw (e instanceof CustomException ce) ? ce : new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+        }
+    }
+
+//    private KisDailyPriceResponse callKisDailyPrice(CatalogInstruments inst, Map<String, String> kisHeaders) {
+//
+//        String url = kisAuthConfig.url().inquireDailyPrice()
+//                + "?FID_COND_MRKT_DIV_CODE=" + KRX_FID_COND_MARKT_DIV_CODE
+//                + "&FID_INPUT_ISCD=" + inst.getSymbol()
+//                + "&FID_PERIOD_DIV_CODE=" + PERIOD_DIV_CODE_D
+//                + "&FID_ORG_ADJ_PRC=" + ORG_ADJ_PRC_1;
+//
+//        CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
+//
+//        if (result.headers() != null && result.headers().get("tr_id") != null) {
+//            String trId = result.headers().get("tr_id").getFirst();
+//            if (!INGEST_TR_ID_DAILY.equals(trId)) {
+//                throw new CustomException(ErrorCode.MD_JOB_TR_ID_WARN, "tr_id mismatch: " + trId);
+//            }
+//        }
+//
+//        KisDailyPriceResponse kis = JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
+//        if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
+//            String code = (kis == null) ? "NULL" : kis.rt_cd();
+//            String msg = (kis == null) ? "null response" : kis.msg1();
+//            throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + code + " / " + msg);
+//        }
+//        return kis;
+//    }
+//
+//
+//    private String getKisRedisAccessKey() {
+//        TokenResponse cachedToken = kisTokenStore.getAccessToken();
+//        if (cachedToken != null && cachedToken.getAccessToken() != null) {
+//            return cachedToken.getAccessToken();
+//        }
+//
+//        Map<String, String> headers = newHeaders();
+//        headers.put(staticConst.X_INTERNAL_TOKEN,runInternalToken );
+//
+//        String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
+//        TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);
+//        kisTokenStore.storeAccessToken(tokenResponse);
+//        return tokenResponse.getAccessToken();
+//    }
+//
+    private Map<String, String> makeSendHeaders(String kisAccessToken) {
+        Map<String, String> headers = newHeaders();
+        headers.put("authorization", staticConst.BEARER + kisAccessToken);
+        headers.put("custtype", staticConst.CUST_TYPE);
+        headers.put("appkey", kisAuthConfig.key().app());
+        headers.put("appsecret", kisAuthConfig.key().secret());
+        headers.put("tr_id", staticConst.INGEST_TR_ID_DAILY);
+        return headers;
+    }
+
+
+    private KisDailyPriceResponse callKisDailyPriceWithRetry(CatalogInstruments inst) {
+
+        try {
+            String token = kisAccessTokenManager.getOrIssue();
+            return callKisDailyPrice(inst, makeSendHeaders(token));
+        } catch (KisInvalidTokenException e) {
+            //  토큰 무효면 강제갱신 후 1회 재시도
+            log.warn("[KIS] invalid token. refresh and retry once. symbol={}, msgCd={}",
+                    inst.getSymbol(), e.getMsgCd());
+            String token2 = kisAccessTokenManager.forceRefresh();
+            return callKisDailyPrice(inst, makeSendHeaders(token2));
+        } catch (KisRateLimitException e) {
+            // 에러 없이를 위해 최소 재시도
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException ignored) {}
+            String token = kisAccessTokenManager.getOrIssue();
+            return callKisDailyPrice(inst, makeSendHeaders(token));
         }
     }
 
@@ -188,37 +262,34 @@ public class MdBulkIngestService {
         }
 
         KisDailyPriceResponse kis = JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
-        if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
-            String code = (kis == null) ? "NULL" : kis.rt_cd();
-            String msg = (kis == null) ? "null response" : kis.msg1();
-            throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + code + " / " + msg);
+
+        if (kis == null || kis.rt_cd() == null) {
+            throw new KisApiException("NULL", "KIS null response");
+        }
+
+        // 비동기식 충돌 방지 를 위함.
+        if (!"0".equals(kis.rt_cd())) {
+
+            String msgCd = safeMsgCd(kis);
+            String msg = (kis.msg1() == null) ? "KIS failed" : kis.msg1();
+
+            if ("EGW00121".equals(msgCd) || "EGW00123".equals(msgCd)) {
+                throw new KisInvalidTokenException(msgCd, msg);
+            }
+            if ("EGW00201".equals(msgCd)) {
+                throw new KisRateLimitException(msgCd, msg);
+            }
+            throw new KisApiException(msgCd, msg);
         }
         return kis;
     }
 
-
-    private String getKisRedisAccessKey() {
-        TokenResponse cachedToken = kisTokenStore.getAccessToken();
-        if (cachedToken != null && cachedToken.getAccessToken() != null) {
-            return cachedToken.getAccessToken();
+    // 메세지 파싱용
+    private String safeMsgCd(KisDailyPriceResponse kis) {
+        try {
+            return (String) KisDailyPriceResponse.class.getMethod("msg_cd").invoke(kis);
+        } catch (Exception ignore) {
+            return "UNKNOWN";
         }
-
-        Map<String, String> headers = newHeaders();
-        headers.put(staticConst.X_INTERNAL_TOKEN,runInternalToken );
-
-        String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
-        TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);
-        kisTokenStore.storeAccessToken(tokenResponse);
-        return tokenResponse.getAccessToken();
-    }
-
-    private Map<String, String> makeSendHeaders(String kisAccessToken) {
-        Map<String, String> headers = newHeaders();
-        headers.put("authorization", staticConst.BEARER + kisAccessToken);
-        headers.put("custtype", staticConst.CUST_TYPE);
-        headers.put("appkey", kisAuthConfig.key().app());
-        headers.put("appsecret", kisAuthConfig.key().secret());
-        headers.put("tr_id", staticConst.INGEST_TR_ID_DAILY);
-        return headers;
     }
 }

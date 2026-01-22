@@ -126,7 +126,7 @@ public class MdService {
                 upserted = mdTransactionService.upsertBarsInNewTx(bars);
             }
 
-            mdJobTxService.success(jobId);
+            mdJobTxService.success(jobId,kis.msg1());
 
             return Md.ResponseBars.builder()
                     .jobId(jobId)

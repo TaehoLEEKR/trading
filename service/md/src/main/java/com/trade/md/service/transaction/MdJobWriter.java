@@ -1,4 +1,4 @@
-package com.trade.md.service;
+package com.trade.md.service.transaction;
 
 import com.trade.common.constant.JobStatus;
 import com.trade.md.entity.MdIngestJob;

@@ -24,11 +24,12 @@ public class MdJobTxService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void success(String jobId) {
+    public void success(String jobId, String summary) {
         MdIngestJob job = mdIngestJobRepository.findById(jobId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "job not found"));
         job.setStatus(JobStatus.SUCCESS.getStatus());
         job.setEndedAt(LocalDateTime.now());
+        job.setErrMsg(summary);
         mdIngestJobRepository.save(job);
     }
 
