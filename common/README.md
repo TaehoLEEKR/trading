@@ -45,3 +45,9 @@ DB readiness 확인이 필요할 때, JPA의 `EntityManager`로 아래 네이티
 DB를 실제로 붙여서 `/ready` 같은 기능을 쓰려면 datasource 설정이 필요합니다.
 
 
+### TODO 
+- `전체적인 application.yml 중앙 관리를 위한 cloudConfig 구현'
+- 'mapper 만 읽어 올수 있는 배포 서비스 x 모듈식 mapper 모듈 구현'
+- '전체적인 서비스 정리'
+
+
