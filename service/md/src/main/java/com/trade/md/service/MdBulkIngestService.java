@@ -13,6 +13,7 @@ import com.trade.common.model.token.TokenResponse;
 import com.trade.common.util.CallClient;
 import com.trade.common.util.JsonUtil;
 import com.trade.md.entity.MdIngestJob;
+import com.trade.md.kis.*;
 import com.trade.md.mapper.MdBarsDao;
 import com.trade.md.mapper.UniverseInstrumentDao;
 import com.trade.md.model.dto.KisDailyPriceResponse;
@@ -24,17 +25,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import com.trade.md.kis.KisAccessTokenManager;
-import com.trade.md.kis.KisInvalidTokenException;
-import com.trade.md.kis.KisRateLimitException;
-import com.trade.md.kis.KisApiException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.trade.common.constant.staticConst.*;
 
@@ -44,20 +44,13 @@ import static com.trade.common.constant.staticConst.*;
 public class MdBulkIngestService {
 
     private final UniverseInstrumentDao universeInstrumentDao;
-//    private final MdBarsDao mdBarsDao;
     private final MdTransactionService mdTransactionService;
 
-//    private final MdJobWriter mdJobWriter;
-
-//    private final KisTokenStore kisTokenStore;
     private final CallClient callClient;
+    private final KisRateGate kisRateGate;
     private final KisAuthConfig kisAuthConfig;
     private final MdJobTxService mdJobTxService;
     private final KisAccessTokenManager kisAccessTokenManager;
-
-//    @Value("${run.internal.token}")
-//    private String runInternalToken;
-//    private final localCommunication localCommunication;
 
     private Map<String, String> newHeaders() {
         return new HashMap<>(staticConst.headers);
@@ -170,48 +163,6 @@ public class MdBulkIngestService {
         }
     }
 
-//    private KisDailyPriceResponse callKisDailyPrice(CatalogInstruments inst, Map<String, String> kisHeaders) {
-//
-//        String url = kisAuthConfig.url().inquireDailyPrice()
-//                + "?FID_COND_MRKT_DIV_CODE=" + KRX_FID_COND_MARKT_DIV_CODE
-//                + "&FID_INPUT_ISCD=" + inst.getSymbol()
-//                + "&FID_PERIOD_DIV_CODE=" + PERIOD_DIV_CODE_D
-//                + "&FID_ORG_ADJ_PRC=" + ORG_ADJ_PRC_1;
-//
-//        CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
-//
-//        if (result.headers() != null && result.headers().get("tr_id") != null) {
-//            String trId = result.headers().get("tr_id").getFirst();
-//            if (!INGEST_TR_ID_DAILY.equals(trId)) {
-//                throw new CustomException(ErrorCode.MD_JOB_TR_ID_WARN, "tr_id mismatch: " + trId);
-//            }
-//        }
-//
-//        KisDailyPriceResponse kis = JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
-//        if (kis == null || kis.rt_cd() == null || !"0".equals(kis.rt_cd())) {
-//            String code = (kis == null) ? "NULL" : kis.rt_cd();
-//            String msg = (kis == null) ? "null response" : kis.msg1();
-//            throw new CustomException(ErrorCode.SERVER_ERROR, "KIS failed: " + code + " / " + msg);
-//        }
-//        return kis;
-//    }
-//
-//
-//    private String getKisRedisAccessKey() {
-//        TokenResponse cachedToken = kisTokenStore.getAccessToken();
-//        if (cachedToken != null && cachedToken.getAccessToken() != null) {
-//            return cachedToken.getAccessToken();
-//        }
-//
-//        Map<String, String> headers = newHeaders();
-//        headers.put(staticConst.X_INTERNAL_TOKEN,runInternalToken );
-//
-//        String result = callClient.POST(localCommunication.retryKisToken(), headers, "");
-//        TokenResponse tokenResponse = JsonUtil.getInstance().decodeFromJson(result, TokenResponse.class);
-//        kisTokenStore.storeAccessToken(tokenResponse);
-//        return tokenResponse.getAccessToken();
-//    }
-//
     private Map<String, String> makeSendHeaders(String kisAccessToken) {
         Map<String, String> headers = newHeaders();
         headers.put("authorization", staticConst.BEARER + kisAccessToken);
@@ -225,24 +176,35 @@ public class MdBulkIngestService {
 
     private KisDailyPriceResponse callKisDailyPriceWithRetry(CatalogInstruments inst) {
 
-        try {
-            String token = kisAccessTokenManager.getOrIssue();
-            return callKisDailyPrice(inst, makeSendHeaders(token));
-        } catch (KisInvalidTokenException e) {
-            //  토큰 무효면 강제갱신 후 1회 재시도
-            log.warn("[KIS] invalid token. refresh and retry once. symbol={}, msgCd={}",
-                    inst.getSymbol(), e.getMsgCd());
-            String token2 = kisAccessTokenManager.forceRefresh();
-            return callKisDailyPrice(inst, makeSendHeaders(token2));
-        } catch (KisRateLimitException e) {
-            // 에러 없이를 위해 최소 재시도
+        final int maxAttempts = 10;
+        boolean refreshed = false;
+        long backoffMs = 200;
+
+        String token = kisAccessTokenManager.getOrIssue();
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                Thread.sleep(250);
-            } catch (InterruptedException ignored) {}
-            String token = kisAccessTokenManager.getOrIssue();
-            return callKisDailyPrice(inst, makeSendHeaders(token));
+                return callKisDailyPrice(inst, makeSendHeaders(token));
+
+            } catch (KisInvalidTokenException e) {
+                if (refreshed){
+                    log.error("invalid token refresh failed. symbol={}", inst.getSymbol());
+                    throw e;
+                }
+                refreshed = true;
+                log.warn("[KIS] invalid token. refresh once. symbol={}, msgCd={}", inst.getSymbol(), e.getMsgCd());
+                token = kisAccessTokenManager.forceRefresh();
+
+            } catch (KisRateLimitException e) {
+                long jitter = ThreadLocalRandom.current().nextLong(0, 150);
+                sleepQuietly(backoffMs + jitter);
+                backoffMs = Math.min(backoffMs * 2, 5000); // 최대 5초
+            }
         }
+
+        throw new KisRateLimitException("EGW00201", "rate limit retries exceeded. symbol=" + inst.getSymbol());
     }
+
 
     private KisDailyPriceResponse callKisDailyPrice(CatalogInstruments inst, Map<String, String> kisHeaders) {
 
@@ -252,25 +214,43 @@ public class MdBulkIngestService {
                 + "&FID_PERIOD_DIV_CODE=" + PERIOD_DIV_CODE_D
                 + "&FID_ORG_ADJ_PRC=" + ORG_ADJ_PRC_1;
 
-        CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
+        try {
+            kisRateGate.acquire();
+            CallClient.CallResult result = callClient.GET_WITH_HEADERS(url, kisHeaders);
 
-        if (result.headers() != null && result.headers().get("tr_id") != null) {
-            String trId = result.headers().get("tr_id").getFirst();
-            if (!INGEST_TR_ID_DAILY.equals(trId)) {
-                throw new CustomException(ErrorCode.MD_JOB_TR_ID_WARN, "tr_id mismatch: " + trId);
+            KisDailyPriceResponse kis =
+                    JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
+
+            validateKisOrThrow(kis);
+            return kis;
+
+        } catch (HttpStatusCodeException e) {
+            log.error("httpstatus error msg={}", e.getResponseBodyAsString(), e);
+            throw translateKisHttpError(e.getResponseBodyAsString(), e);
+
+        } catch (RestClientResponseException e) {
+            log.error("restclient error msg={}", e.getResponseBodyAsString(), e);
+            throw translateKisHttpError(e.getResponseBodyAsString(), e);
+
+        } catch (RestClientException e) {
+            log.error("restclient error msg={}", e.getMessage(), e);
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("unexpected error msg={}", e.getMessage(), e);
+            KisDailyPriceResponse parsed = tryParseFromMessage(e.getMessage());
+            if (parsed != null && "EGW00201".equals(parsed.msg_cd())) {
+                throw new KisRateLimitException(parsed.msg_cd(), parsed.msg1());
             }
+            throw e;
         }
+    }
 
-        KisDailyPriceResponse kis = JsonUtil.getInstance().decodeFromJson(result.body(), KisDailyPriceResponse.class);
-
+    private void validateKisOrThrow(KisDailyPriceResponse kis) {
         if (kis == null || kis.rt_cd() == null) {
             throw new KisApiException("NULL", "KIS null response");
         }
-
-        // 비동기식 충돌 방지 를 위함.
         if (!"0".equals(kis.rt_cd())) {
-
-            String msgCd = safeMsgCd(kis);
+            String msgCd = kis.msg_cd();
             String msg = (kis.msg1() == null) ? "KIS failed" : kis.msg1();
 
             if ("EGW00121".equals(msgCd) || "EGW00123".equals(msgCd)) {
@@ -281,7 +261,42 @@ public class MdBulkIngestService {
             }
             throw new KisApiException(msgCd, msg);
         }
-        return kis;
+    }
+
+    private RuntimeException translateKisHttpError(String body, Exception e) {
+        KisDailyPriceResponse kis = null;
+        try {
+            if (body != null && !body.isBlank()) {
+                kis = JsonUtil.getInstance().decodeFromJson(body, KisDailyPriceResponse.class);
+            }
+        } catch (Exception ignore) {}
+
+        if (kis != null) {
+            String msgCd = kis.msg_cd();
+            String msg = (kis.msg1() == null) ? e.getMessage() : kis.msg1();
+
+            if ("EGW00121".equals(msgCd) || "EGW00123".equals(msgCd)) {
+                return new KisInvalidTokenException(msgCd, msg);
+            }
+            if ("EGW00201".equals(msgCd)) {
+                return new KisRateLimitException(msgCd, msg);
+            }
+            return new KisApiException(msgCd, msg);
+        }
+
+        return (e instanceof RuntimeException re) ? re : new RuntimeException(e);
+    }
+
+    private KisDailyPriceResponse tryParseFromMessage(String msg) {
+        if (msg == null) return null;
+        int idx = msg.indexOf("{\"rt_cd\"");
+        if (idx < 0) return null;
+        String json = msg.substring(idx);
+        try {
+            return JsonUtil.getInstance().decodeFromJson(json, KisDailyPriceResponse.class);
+        } catch (Exception ignore) {
+            return null;
+        }
     }
 
     // 메세지 파싱용
@@ -290,6 +305,14 @@ public class MdBulkIngestService {
             return (String) KisDailyPriceResponse.class.getMethod("msg_cd").invoke(kis);
         } catch (Exception ignore) {
             return "UNKNOWN";
+        }
+    }
+
+    private void sleepQuietly(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {
+            log.error("sleep catch");
         }
     }
 }

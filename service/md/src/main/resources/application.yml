@@ -40,6 +40,8 @@ jwt:
 
 trade:
   kis:
+    rate:
+      qps: 3
     key:
       secret: ${TRADE_KIS_KEY_SECRET:}
       app: ${TRADE_KIS_KEY_APP:}
