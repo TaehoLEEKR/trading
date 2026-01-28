@@ -18,7 +18,10 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 // DB 적재 할 용도 Writer
+
+// Transaction 분리
 public class RunWriter {
+
     private final RunRunRepository runRunRepository;
     private final RunRunStepRepository runRunStepRepository;
 
@@ -64,5 +67,48 @@ public class RunWriter {
 
         runRunStepRepository.save(step);
         return stepId;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finishStepSuccess(String stepId, int total, int success, int failed) {
+        RunRunStep step = runRunStepRepository.findById(stepId).orElseThrow();
+        step.setStatus("SUCCESS");
+        step.setEndedAt(LocalDateTime.now().toString());
+        step.setItemTotal(total);
+        step.setItemSuccess(success);
+        step.setItemFailed(failed);
+        runRunStepRepository.save(step);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finishStepFailed(String stepId, String errCode, String errMsg) {
+        RunRunStep step = runRunStepRepository.findById(stepId).orElseThrow();
+        step.setStatus("FAILED");
+        step.setEndedAt(LocalDateTime.now().toString());
+        step.setErrCode(errCode);
+        step.setErrMsg(errMsg);
+        runRunStepRepository.save(step);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finishRunSuccess(String runId, int targets, int success, int failed, String summary) {
+        RunRun run = runRunRepository.findById(runId).orElseThrow();
+        run.setStatus("SUCCESS");
+        run.setEndedAt(LocalDateTime.now().toString());
+        run.setTargetsCount(targets);
+        run.setSuccessCount(success);
+        run.setFailedCount(failed);
+        run.setSummary(summary);
+        runRunRepository.save(run);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finishRunFailed(String runId, String errCode, String errMsg) {
+        RunRun run = runRunRepository.findById(runId).orElseThrow();
+        run.setStatus("FAILED");
+        run.setEndedAt(LocalDateTime.now().toString());
+        run.setErrCode(errCode);
+        run.setErrMsg(errMsg);
+        runRunRepository.save(run);
     }
 }
