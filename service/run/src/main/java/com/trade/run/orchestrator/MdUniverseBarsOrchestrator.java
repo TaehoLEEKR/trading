@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,12 +28,12 @@ public class MdUniverseBarsOrchestrator {
     public Mono<Void> runOnce() {
         var md = props.md();
         var ctx = new RunContext(md.market(), md.intervalCd(), md.limit(), md.maxInstruments());
-
+        String jobKey = String.format("md-bars-%s-%s-%s", md.market(), md.intervalCd(), LocalDate.now());
         return fetchTargetsStep.execute(ctx)
                 .flatMapMany(targets -> {
                     if (targets.isEmpty()) {
                         log.info("[RUN] no targets market={} intervalCd={}", ctx.market(), ctx.intervalCd());
-                        return Flux.<UniverseTargetDto.UniverseTargetsResponse.Target>empty();
+                        return Flux.empty();
                     }
                     return Flux.fromIterable(targets);
                 })
