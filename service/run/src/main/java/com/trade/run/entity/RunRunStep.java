@@ -4,8 +4,7 @@ import com.trade.common.model.BaseTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
@@ -14,6 +13,9 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "run_run_steps", schema = "trading")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class RunRunStep extends BaseTime {
     @Id
     @Size(max = 64)
@@ -60,9 +62,9 @@ public class RunRunStep extends BaseTime {
 
     @NotNull
     @Column(name = "started_at", nullable = false)
-    private Instant startedAt;
+    private String startedAt;
 
     @Column(name = "ended_at")
-    private Instant endedAt;
+    private String endedAt;
 
 }

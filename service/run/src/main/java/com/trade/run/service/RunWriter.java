@@ -4,6 +4,7 @@ import com.trade.common.component.Snowflake;
 import com.trade.common.constant.JobStatus;
 import com.trade.run.config.RunProperties;
 import com.trade.run.entity.RunRun;
+import com.trade.run.entity.RunRunStep;
 import com.trade.run.repository.RunRunRepository;
 import com.trade.run.repository.RunRunStepRepository;
 import com.trade.run.steps.RunContext;
@@ -44,5 +45,24 @@ public class RunWriter {
 
         runRunRepository.save(run);
         return runId;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String startStep(String runId, String stepName) {
+        String stepId = "step_" + snowflake.nextId();
+
+        RunRunStep step = RunRunStep.builder()
+                .stepId(stepId)
+                .runId(runId)
+                .stepName(stepName)
+                .status(JobStatus.RUNNING.getStatus())
+                .itemTotal(0)
+                .itemSuccess(0)
+                .itemFailed(0)
+                .startedAt(LocalDateTime.now().toString())
+                .build();
+
+        runRunStepRepository.save(step);
+        return stepId;
     }
 }
