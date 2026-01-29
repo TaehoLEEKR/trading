@@ -72,7 +72,7 @@ public class RunWriter {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finishStepSuccess(String stepId, int total, int success, int failed) {
         RunRunStep step = runRunStepRepository.findById(stepId).orElseThrow();
-        step.setStatus("SUCCESS");
+        step.setStatus(JobStatus.SUCCESS.getStatus());
         step.setEndedAt(LocalDateTime.now().toString());
         step.setItemTotal(total);
         step.setItemSuccess(success);
@@ -83,7 +83,7 @@ public class RunWriter {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finishStepFailed(String stepId, String errCode, String errMsg) {
         RunRunStep step = runRunStepRepository.findById(stepId).orElseThrow();
-        step.setStatus("FAILED");
+        step.setStatus(JobStatus.FAILED.getStatus());
         step.setEndedAt(LocalDateTime.now().toString());
         step.setErrCode(errCode);
         step.setErrMsg(errMsg);
@@ -93,7 +93,7 @@ public class RunWriter {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finishRunSuccess(String runId, int targets, int success, int failed, String summary) {
         RunRun run = runRunRepository.findById(runId).orElseThrow();
-        run.setStatus("SUCCESS");
+        run.setStatus(JobStatus.SUCCESS.getStatus());
         run.setEndedAt(LocalDateTime.now().toString());
         run.setTargetsCount(targets);
         run.setSuccessCount(success);
@@ -105,8 +105,22 @@ public class RunWriter {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finishRunFailed(String runId, String errCode, String errMsg) {
         RunRun run = runRunRepository.findById(runId).orElseThrow();
-        run.setStatus("FAILED");
+        run.setStatus(JobStatus.FAILED.getStatus());
         run.setEndedAt(LocalDateTime.now().toString());
+        run.setErrCode(errCode);
+        run.setErrMsg(errMsg);
+        runRunRepository.save(run);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finishRun(String runId, String status, int targets, int success, int failed, String summary, String errCode, String errMsg) {
+        RunRun run = runRunRepository.findById(runId).orElseThrow();
+        run.setStatus(status);
+        run.setEndedAt(LocalDateTime.now().toString());
+        run.setTargetsCount(targets);
+        run.setSuccessCount(success);
+        run.setFailedCount(failed);
+        run.setSummary(summary);
         run.setErrCode(errCode);
         run.setErrMsg(errMsg);
         runRunRepository.save(run);

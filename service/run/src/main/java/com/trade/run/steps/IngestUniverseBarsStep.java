@@ -28,4 +28,6 @@ public class IngestUniverseBarsStep {
                 .thenReturn(new IngestResult(t.universeId(), true, null))
                 .onErrorResume(e -> Mono.just(new IngestResult(t.universeId(), false, e.toString())));
     }
+
+    public record IngestResult(String universeId, boolean success, String error) {}
 }

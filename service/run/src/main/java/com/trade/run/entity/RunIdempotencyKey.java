@@ -1,5 +1,6 @@
 package com.trade.run.entity;
 
+import com.trade.common.constant.JobStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,8 +24,28 @@ public class RunIdempotencyKey {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "status", length = 20, nullable = false)
+    private String status;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @PrePersist
     public void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        var now = LocalDateTime.now();
+        if (createdAt == null){
+            createdAt = now;
+        }
+        if (updatedAt == null){
+            updatedAt = now;
+        }
+        if (status == null){
+            status = JobStatus.RUNNING.getStatus();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
