@@ -37,4 +37,14 @@ public class staticConst {
     public static final String INGEST_TR_ID = "FHKST01010100";
     //주식현재가 일자별
     public static final String INGEST_TR_ID_DAILY = "FHKST01010400";
+
+    // run step Name
+    public static final String FETCH_TARGETS = "FETCH_TARGETS";
+    public static final String INGEST_UNIVERSE_BARS = "INGEST_UNIVERSE_BARS";
+    public static final String FETCH_TARGETS_FAIL = "FETCH_TARGETS_FAIL";
+
+    public static final String INGEST_FAIL = "INGEST_FAIL";
+    public static final String INGEST_SUCCESS = "INGEST_SUCCESS";
+
+    public static final String SUMMARIZE = "SUMMARIZE";
 }

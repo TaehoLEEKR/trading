@@ -5,8 +5,12 @@ import lombok.Getter;
 @Getter
 public enum JobStatus {
     RUNNING("RUNNING", "Running"),
+    SKIPPED("SKIPPED", "Skip"),
     SUCCESS("SUCCESS", "Success"),
-    FAILED("FAILED", "Failed")
+    PARTIAL_SUCCESS("PARTIAL_SUCCESS", "PARTIAL_SUCCESS"),
+    FAILED("FAILED", "Failed"),
+    ALL_FAILED("ALL_FAILED", "Failed"),
+    RUN_EXCEPTION("RUN_EXCEPTION", "Run Exception"),
     ;
 
     private final String status;
